@@ -1,18 +1,17 @@
 #![deny(clippy::all)]
 
+use std::collections::HashMap;
 use napi::bindgen_prelude::{Null, ToNapiValue};
 use napi::sys::{napi_env, napi_value};
-use std::collections::HashMap;
-
-use napi_derive::napi;
 
 pub mod client;
 pub mod query;
 
-#[napi]
+#[cfg_attr(feature = "napi", napi_derive::napi)]
 pub type ReturnDataType = HashMap<String, Option<Value>>;
 
-#[derive(Clone)]
+// #[derive(Clone)]
+#[derive(Debug)]
 pub enum Value {
   Time32(i32, String),
   Time64(i64, String),
@@ -39,7 +38,7 @@ pub enum Value {
 
 static FALLBACK_STR: &str = "<unsupported type>";
 
-#[napi]
+#[cfg_attr(feature = "napi", napi_derive::napi)]
 impl ToNapiValue for Value {
   unsafe fn to_napi_value(env: napi_env, val: Self) -> napi::Result<napi_value> {
     match val {

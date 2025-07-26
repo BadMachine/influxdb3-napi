@@ -4,12 +4,11 @@ use std::fmt;
 
 use arrow_flight::{FlightClient, Ticket};
 use napi::bindgen_prelude::block_on;
-use napi_derive::napi;
-use std::time::Instant;
 use tonic::codegen::Bytes;
 use tonic::transport::Channel;
 
-#[napi(string_enum)]
+
+#[napi_derive::napi(string_enum)]
 pub enum QueryType {
   #[napi(value = "sql")]
   Sql,
@@ -26,15 +25,16 @@ impl fmt::Display for QueryType {
   }
 }
 
-#[napi]
+#[cfg_attr(feature = "napi", napi_derive::napi)]
 pub struct InfluxDBClient {
   flight_client: FlightClient,
 }
 
-#[napi]
+#[cfg_attr(feature = "napi", napi_derive::napi)]
 impl InfluxDBClient {
-  #[napi(constructor)]
+  #[cfg_attr(feature = "napi", napi_derive::napi(constructor))]
   pub fn new(addr: String, token: Option<String>) -> Self {
+    #[cfg(feature = "napi")]
     let channel = block_on(async {
       Channel::from_shared(addr)
         .unwrap()
@@ -42,6 +42,8 @@ impl InfluxDBClient {
         .await
         .expect("error connecting")
     });
+    #[cfg(not(feature = "napi"))]
+    let channel = Channel::from_shared(addr).unwrap().connect_lazy();
 
     let mut flight_client = FlightClient::new(channel);
     if let Some(token) = token {
@@ -53,11 +55,33 @@ impl InfluxDBClient {
     Self { flight_client }
   }
 
-  #[napi]
-  /// # Safety
-  ///
-  /// This function should not be called before the horsemen are ready.
+  #[cfg(feature = "napi")]
+  #[cfg_attr(feature = "napi", napi_derive::napi)]
   pub async unsafe fn query_batch(
+    &mut self,
+    database: String,
+    query: String,
+    _type: QueryType,
+  ) -> Result<QueryResultByBatch, napi::Error> {
+    let payload = format!(
+      "{{ \"database\": \"{}\", \"sql_query\": \"{}\", \"query_type\": \"{}\" }}",
+      database, query, _type
+    )
+    .replace("\n", " ");
+
+    let ticket = Ticket {
+      ticket: Bytes::from(payload),
+    };
+
+    let response = self.flight_client.do_get(ticket).await.unwrap();
+
+    let result = QueryResultByBatch::new(response);
+
+    Ok(result)
+  }
+
+  #[cfg(not(feature = "napi"))]
+  pub async fn query_batch(
     &mut self,
     database: String,
     query: String,

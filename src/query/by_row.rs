@@ -2,10 +2,8 @@ use arrow_flight::decode::FlightRecordBatchStream;
 use std::collections::HashMap;
 // use napi::bindgen_prelude::async_iterator::AsyncGenerator;
 // use napi::bindgen_prelude::Generator;
-use napi_derive::napi;
 use tokio_stream::StreamExt;
 
-#[napi]
 pub struct QueryResultByRow {
   pub(crate) response: FlightRecordBatchStream,
 }

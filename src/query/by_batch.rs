@@ -10,70 +10,179 @@ use arrow::array::{
 use arrow::datatypes::{DataType, TimeUnit};
 use arrow_flight::decode::FlightRecordBatchStream;
 use napi::tokio::spawn;
-use napi_derive::napi;
 use std::collections::HashMap;
+use std::io::Cursor;
 use std::sync::Arc;
+use arrow::json::{LineDelimitedWriter, ReaderBuilder};
 use tokio_stream::StreamExt;
 
 use crate::Value;
 
 #[derive(Debug)]
-#[napi]
+#[cfg_attr(feature = "napi", napi_derive::napi)]
 pub struct QueryResultByBatch {
   pub(crate) response: FlightRecordBatchStream,
 }
 
-#[napi]
+#[cfg_attr(feature = "napi", napi_derive::napi)]
 impl QueryResultByBatch {
   pub fn new(response: FlightRecordBatchStream) -> Self {
     Self { response }
   }
 
-  #[napi(js_name = "next")]
-  /// # Safety
-  ///
-  /// This function should not be called before the horsemen are ready.
-  pub async unsafe fn next(&mut self) -> napi::Result<Option<Vec<crate::ReturnDataType>>> {
+  // #[cfg(feature = "napi")]
+  // pub async unsafe fn next(&mut self) -> napi::Result<Option<Vec<crate::ReturnDataType>>> {
+  //   let batch = self.response.next().await;
+  //
+  //   if let Some(Ok(batch)) = batch {
+  //     let row_count = batch.num_rows();
+  //
+  //     let arc_batch = Arc::new(batch);
+  //
+  //     if row_count < 100 {
+  //       let output =
+  //         QueryResultByBatch::serialize_batch((0..row_count).collect(), Arc::clone(&arc_batch));
+  //       return Ok(Some(output));
+  //     }
+  //
+  //     let threads_count = std::thread::available_parallelism()
+  //       .map(|n| n.get().min(8))
+  //       .unwrap_or(4);
+  //
+  //     let chunk_size = row_count.div_ceil(threads_count);
+  //     let mut handles = Vec::with_capacity(threads_count);
+  //
+  //     for chunk_start in (0..row_count).step_by(chunk_size) {
+  //       let chunk_end = (chunk_start + chunk_size).min(row_count);
+  //       let indices: Vec<usize> = (chunk_start..chunk_end).collect();
+  //       let batch_clone = Arc::clone(&arc_batch);
+  //
+  //       handles.push(spawn(
+  //         async { QueryResultByBatch::serialize_batch(indices, batch_clone) }, // async { QueryResult::serialize_batch_columnar( batch_clone) }
+  //       ));
+  //     }
+  //
+  //     let mut output = Vec::with_capacity(row_count);
+  //     for handle in handles {
+  //       output.extend(handle.await.unwrap());
+  //     }
+  //     //
+  //     // println!(
+  //     //   "Serialization time threaded: {}ms",
+  //     //   Instant::now().duration_since(start).as_millis()
+  //     // );
+  //     Ok(Some(output))
+  //   } else {
+  //     Ok(None)
+  //   }
+  // }
+  //
+  // #[cfg(not(feature = "napi"))]
+  // pub async fn next(&mut self) -> napi::Result<Option<Vec<crate::ReturnDataType>>> {
+  //   let batch = self.response.next().await;
+  //
+  //   if let Some(Ok(batch)) = batch {
+  //     // println!("THE BATCH IS {:?}", batch);
+  //     // Read the JSON data
+  //
+  //     // Сериализация RecordBatch в JSON
+  //     let mut buf = Vec::new();
+  //     {
+  //       let cursor = Cursor::new(&mut buf);
+  //       let mut writer = LineDelimitedWriter::new(cursor);
+  //       writer.write(&batch).unwrap();
+  //       writer.finish().unwrap();
+  //     }
+  //
+  //     let json_str = String::from_utf8(buf).unwrap();
+  //     println!("Serialized JSON:\n{}", json_str);
+  //
+  //     let row_count = batch.num_rows();
+  //
+  //     let arc_batch = Arc::new(batch);
+  //
+  //     if row_count < 100 {
+  //       let output =
+  //           QueryResultByBatch::serialize_batch((0..row_count).collect(), Arc::clone(&arc_batch));
+  //       return Ok(Some(output));
+  //     }
+  //
+  //     let threads_count = std::thread::available_parallelism()
+  //         .map(|n| n.get().min(8))
+  //         .unwrap_or(4);
+  //
+  //     let chunk_size = row_count.div_ceil(threads_count);
+  //     let mut handles = Vec::with_capacity(threads_count);
+  //
+  //     for chunk_start in (0..row_count).step_by(chunk_size) {
+  //       let chunk_end = (chunk_start + chunk_size).min(row_count);
+  //       let indices: Vec<usize> = (chunk_start..chunk_end).collect();
+  //       let batch_clone = Arc::clone(&arc_batch);
+  //
+  //       handles.push(spawn(
+  //         async { QueryResultByBatch::serialize_batch(indices, batch_clone) }, // async { QueryResult::serialize_batch_columnar( batch_clone) }
+  //       ));
+  //     }
+  //
+  //     let mut output = Vec::with_capacity(row_count);
+  //     for handle in handles {
+  //       output.extend(handle.await.unwrap());
+  //     }
+  //     //
+  //     // println!(
+  //     //   "Serialization time threaded: {}ms",
+  //     //   Instant::now().duration_since(start).as_millis()
+  //     // );
+  //     Ok(Some(output))
+  //   } else {
+  //     Ok(None)
+  //   }
+  // }
+
+  #[cfg(feature = "napi")]
+  #[napi]
+  pub async unsafe fn next(&mut self) -> napi::Result<Option<String>> {
     let batch = self.response.next().await;
 
     if let Some(Ok(batch)) = batch {
-      let row_count = batch.num_rows();
+      // println!("THE BATCH IS {:?}", batch);
+      // Read the JSON data
 
-      let arc_batch = Arc::new(batch);
-
-      if row_count < 100 {
-        let output =
-          QueryResultByBatch::serialize_batch((0..row_count).collect(), Arc::clone(&arc_batch));
-        return Ok(Some(output));
+      // Сериализация RecordBatch в JSON
+      let mut buf = Vec::new();
+      {
+        let cursor = Cursor::new(&mut buf);
+        let mut writer = LineDelimitedWriter::new(cursor);
+        writer.write(&batch).unwrap();
+        writer.finish().unwrap();
       }
 
-      let threads_count = std::thread::available_parallelism()
-        .map(|n| n.get().min(8))
-        .unwrap_or(4);
+      let json_str = String::from_utf8(buf).unwrap();
+      Ok(Some(json_str))
+    } else {
+      Ok(None)
+    }
+  }
 
-      let chunk_size = row_count.div_ceil(threads_count);
-      let mut handles = Vec::with_capacity(threads_count);
+  #[cfg(not(feature = "napi"))]
+  pub async fn next(&mut self) -> napi::Result<Option<String>> {
+    let batch = self.response.next().await;
 
-      for chunk_start in (0..row_count).step_by(chunk_size) {
-        let chunk_end = (chunk_start + chunk_size).min(row_count);
-        let indices: Vec<usize> = (chunk_start..chunk_end).collect();
-        let batch_clone = Arc::clone(&arc_batch);
+    if let Some(Ok(batch)) = batch {
+      // println!("THE BATCH IS {:?}", batch);
+      // Read the JSON data
 
-        handles.push(spawn(
-          async { QueryResultByBatch::serialize_batch(indices, batch_clone) }, // async { QueryResult::serialize_batch_columnar( batch_clone) }
-        ));
+      // Сериализация RecordBatch в JSON
+      let mut buf = Vec::new();
+      {
+        let cursor = Cursor::new(&mut buf);
+        let mut writer = LineDelimitedWriter::new(cursor);
+        writer.write(&batch).unwrap();
+        writer.finish().unwrap();
       }
 
-      let mut output = Vec::with_capacity(row_count);
-      for handle in handles {
-        output.extend(handle.await.unwrap());
-      }
-      //
-      // println!(
-      //   "Serialization time threaded: {}ms",
-      //   Instant::now().duration_since(start).as_millis()
-      // );
-      Ok(Some(output))
+      let json_str = String::from_utf8(buf).unwrap();
+      Ok(Some(json_str))
     } else {
       Ok(None)
     }

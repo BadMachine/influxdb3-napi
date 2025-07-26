@@ -59,5 +59,4 @@ export default __napiModule.exports
 export const InfluxDbClient = __napiModule.exports.InfluxDbClient
 export const InfluxDBClient = __napiModule.exports.InfluxDBClient
 export const QueryResultByBatch = __napiModule.exports.QueryResultByBatch
-export const QueryResultByRow = __napiModule.exports.QueryResultByRow
 export const QueryType = __napiModule.exports.QueryType
