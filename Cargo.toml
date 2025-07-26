@@ -1,0 +1,25 @@
+
+[package]
+authors = ["LongYinan <lynweklm@gmail.com>"]
+edition = "2021"
+name = "influxdb_client"
+version = "0.1.0"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+napi = { version = "3.1.3", features = ["full","compat-mode","async"]}
+napi-derive = "3.1.1"
+tonic = "0.12.3"
+tokio-stream = "0.1.17"
+arrow = "55.2.0"
+arrow-flight = { version = "55.2.0", features = ["flight-sql","flight-sql-experimental","tls","tokio"] }
+tokio = { version = "1.47.0", features = ["rt", "rt-multi-thread", "macros"] }
+
+[build-dependencies]
+napi-build = "2"
+
+[profile.release]
+lto = true
+strip = "symbols"
