@@ -35,6 +35,9 @@ impl QueryResultByBatch {
 
   #[cfg(not(feature = "native"))]
   #[napi]
+  /// # Safety
+  ///
+  /// This function should not be called before the horsemen are ready.
   pub async unsafe fn next(
     &mut self,
   ) -> napi::Result<Option<Either<Vec<crate::ReturnDataType>, Vec<serde_json::Value>>>> {
@@ -102,6 +105,7 @@ impl QueryResultByBatch {
   ) -> napi::Result<Option<Either<Vec<crate::ReturnDataType>, Vec<serde_json::Value>>>> {
     let batch = self.response.next().await;
 
+    println!("{:?}", batch);
     match self.serializer {
       Serializer::Unsafe => {
         let serialized = unsafe_serialize(batch);

@@ -3,9 +3,7 @@ use crate::query::by_batch::QueryResultByBatch;
 use std::fmt;
 
 use crate::serializer::Serializer;
-use crate::serializer::Serializer::Unsafe;
 use arrow_flight::{FlightClient, Ticket};
-use napi::bindgen_prelude::block_on;
 use tonic::codegen::Bytes;
 use tonic::transport::Channel;
 
@@ -13,15 +11,15 @@ use tonic::transport::Channel;
 pub enum QueryType {
   #[napi(value = "sql")]
   Sql,
-  #[napi(value = "flux")]
-  Flux,
+  #[napi(value = "influxql")]
+  Influxql,
 }
 
 impl fmt::Display for QueryType {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       QueryType::Sql => write!(f, "sql"),
-      QueryType::Flux => write!(f, "flux"),
+      QueryType::Influxql => write!(f, "influxql"),
     }
   }
 }
@@ -36,6 +34,8 @@ pub struct InfluxDBClient {
 impl InfluxDBClient {
   #[cfg_attr(not(feature = "native"), napi_derive::napi(constructor))]
   pub fn new(addr: String, token: Option<String>, serializer: Option<Serializer>) -> Self {
+    #[cfg(not(feature = "native"))]
+    use napi::bindgen_prelude::block_on;
     #[cfg(not(feature = "native"))]
     let channel = block_on(async {
       Channel::from_shared(addr)
@@ -62,6 +62,9 @@ impl InfluxDBClient {
 
   #[cfg(not(feature = "native"))]
   #[cfg_attr(not(feature = "native"), napi_derive::napi)]
+  /// # Safety
+  ///
+  /// This function should not be called before the horsemen are ready.
   pub async unsafe fn query_batch(
     &mut self,
     database: String,
