@@ -2,11 +2,12 @@ use crate::query::by_batch::QueryResultByBatch;
 
 use std::fmt;
 
+use crate::serializer::Serializer;
+use crate::serializer::Serializer::Unsafe;
 use arrow_flight::{FlightClient, Ticket};
 use napi::bindgen_prelude::block_on;
 use tonic::codegen::Bytes;
 use tonic::transport::Channel;
-
 
 #[napi_derive::napi(string_enum)]
 pub enum QueryType {
@@ -25,16 +26,17 @@ impl fmt::Display for QueryType {
   }
 }
 
-#[cfg_attr(feature = "napi", napi_derive::napi)]
+#[cfg_attr(not(feature = "native"), napi_derive::napi)]
 pub struct InfluxDBClient {
   flight_client: FlightClient,
+  serializer: Option<Serializer>,
 }
 
-#[cfg_attr(feature = "napi", napi_derive::napi)]
+#[cfg_attr(not(feature = "native"), napi_derive::napi)]
 impl InfluxDBClient {
-  #[cfg_attr(feature = "napi", napi_derive::napi(constructor))]
-  pub fn new(addr: String, token: Option<String>) -> Self {
-    #[cfg(feature = "napi")]
+  #[cfg_attr(not(feature = "native"), napi_derive::napi(constructor))]
+  pub fn new(addr: String, token: Option<String>, serializer: Option<Serializer>) -> Self {
+    #[cfg(not(feature = "native"))]
     let channel = block_on(async {
       Channel::from_shared(addr)
         .unwrap()
@@ -42,7 +44,7 @@ impl InfluxDBClient {
         .await
         .expect("error connecting")
     });
-    #[cfg(not(feature = "napi"))]
+    #[cfg(feature = "native")]
     let channel = Channel::from_shared(addr).unwrap().connect_lazy();
 
     let mut flight_client = FlightClient::new(channel);
@@ -52,11 +54,14 @@ impl InfluxDBClient {
         .unwrap();
     }
 
-    Self { flight_client }
+    Self {
+      flight_client,
+      serializer,
+    }
   }
 
-  #[cfg(feature = "napi")]
-  #[cfg_attr(feature = "napi", napi_derive::napi)]
+  #[cfg(not(feature = "native"))]
+  #[cfg_attr(not(feature = "native"), napi_derive::napi)]
   pub async unsafe fn query_batch(
     &mut self,
     database: String,
@@ -75,12 +80,12 @@ impl InfluxDBClient {
 
     let response = self.flight_client.do_get(ticket).await.unwrap();
 
-    let result = QueryResultByBatch::new(response);
+    let result = QueryResultByBatch::new(response, self.serializer.clone());
 
     Ok(result)
   }
 
-  #[cfg(not(feature = "napi"))]
+  #[cfg(feature = "native")]
   pub async fn query_batch(
     &mut self,
     database: String,
@@ -99,7 +104,7 @@ impl InfluxDBClient {
 
     let response = self.flight_client.do_get(ticket).await.unwrap();
 
-    let result = QueryResultByBatch::new(response);
+    let result = QueryResultByBatch::new(response, self.serializer.clone());
 
     Ok(result)
   }

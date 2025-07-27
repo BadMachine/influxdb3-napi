@@ -1,190 +1,160 @@
+use crate::serializer::not_safe::unsafe_serialize;
+use crate::serializer::Serializer;
+use crate::Value;
 use arrow::array::{
-  Array, BooleanArray, Date32Array, Date64Array,
-  DurationMicrosecondArray, DurationMillisecondArray, DurationNanosecondArray, DurationSecondArray,
-  Float16Array, Float32Array, Float64Array, Int16Array, Int32Array, Int64Array, Int8Array,
-  RecordBatch, StringArray, StringViewArray, Time32MillisecondArray, Time32SecondArray,
-  Time64MicrosecondArray, Time64NanosecondArray, TimestampMicrosecondArray,
-  TimestampMillisecondArray, TimestampNanosecondArray, TimestampSecondArray, UInt16Array,
-  UInt32Array, UInt64Array, UInt8Array,
+  Array, BooleanArray, Date32Array, Date64Array, DurationMicrosecondArray,
+  DurationMillisecondArray, DurationNanosecondArray, DurationSecondArray, Float16Array,
+  Float32Array, Float64Array, Int16Array, Int32Array, Int64Array, Int8Array, RecordBatch,
+  StringArray, StringViewArray, Time32MillisecondArray, Time32SecondArray, Time64MicrosecondArray,
+  Time64NanosecondArray, TimestampMicrosecondArray, TimestampMillisecondArray,
+  TimestampNanosecondArray, TimestampSecondArray, UInt16Array, UInt32Array, UInt64Array,
+  UInt8Array,
 };
 use arrow::datatypes::{DataType, TimeUnit};
 use arrow_flight::decode::FlightRecordBatchStream;
-use napi::tokio::spawn;
+use napi::Either;
 use std::collections::HashMap;
-use std::io::Cursor;
 use std::sync::Arc;
-use arrow::json::{LineDelimitedWriter, ReaderBuilder};
 use tokio_stream::StreamExt;
 
-use crate::Value;
-
 #[derive(Debug)]
-#[cfg_attr(feature = "napi", napi_derive::napi)]
+#[cfg_attr(not(feature = "native"), napi_derive::napi)]
 pub struct QueryResultByBatch {
   pub(crate) response: FlightRecordBatchStream,
+  pub serializer: Serializer,
 }
 
-#[cfg_attr(feature = "napi", napi_derive::napi)]
+#[cfg_attr(not(feature = "native"), napi_derive::napi)]
 impl QueryResultByBatch {
-  pub fn new(response: FlightRecordBatchStream) -> Self {
-    Self { response }
-  }
-
-  // #[cfg(feature = "napi")]
-  // pub async unsafe fn next(&mut self) -> napi::Result<Option<Vec<crate::ReturnDataType>>> {
-  //   let batch = self.response.next().await;
-  //
-  //   if let Some(Ok(batch)) = batch {
-  //     let row_count = batch.num_rows();
-  //
-  //     let arc_batch = Arc::new(batch);
-  //
-  //     if row_count < 100 {
-  //       let output =
-  //         QueryResultByBatch::serialize_batch((0..row_count).collect(), Arc::clone(&arc_batch));
-  //       return Ok(Some(output));
-  //     }
-  //
-  //     let threads_count = std::thread::available_parallelism()
-  //       .map(|n| n.get().min(8))
-  //       .unwrap_or(4);
-  //
-  //     let chunk_size = row_count.div_ceil(threads_count);
-  //     let mut handles = Vec::with_capacity(threads_count);
-  //
-  //     for chunk_start in (0..row_count).step_by(chunk_size) {
-  //       let chunk_end = (chunk_start + chunk_size).min(row_count);
-  //       let indices: Vec<usize> = (chunk_start..chunk_end).collect();
-  //       let batch_clone = Arc::clone(&arc_batch);
-  //
-  //       handles.push(spawn(
-  //         async { QueryResultByBatch::serialize_batch(indices, batch_clone) }, // async { QueryResult::serialize_batch_columnar( batch_clone) }
-  //       ));
-  //     }
-  //
-  //     let mut output = Vec::with_capacity(row_count);
-  //     for handle in handles {
-  //       output.extend(handle.await.unwrap());
-  //     }
-  //     //
-  //     // println!(
-  //     //   "Serialization time threaded: {}ms",
-  //     //   Instant::now().duration_since(start).as_millis()
-  //     // );
-  //     Ok(Some(output))
-  //   } else {
-  //     Ok(None)
-  //   }
-  // }
-  //
-  // #[cfg(not(feature = "napi"))]
-  // pub async fn next(&mut self) -> napi::Result<Option<Vec<crate::ReturnDataType>>> {
-  //   let batch = self.response.next().await;
-  //
-  //   if let Some(Ok(batch)) = batch {
-  //     // println!("THE BATCH IS {:?}", batch);
-  //     // Read the JSON data
-  //
-  //     // Сериализация RecordBatch в JSON
-  //     let mut buf = Vec::new();
-  //     {
-  //       let cursor = Cursor::new(&mut buf);
-  //       let mut writer = LineDelimitedWriter::new(cursor);
-  //       writer.write(&batch).unwrap();
-  //       writer.finish().unwrap();
-  //     }
-  //
-  //     let json_str = String::from_utf8(buf).unwrap();
-  //     println!("Serialized JSON:\n{}", json_str);
-  //
-  //     let row_count = batch.num_rows();
-  //
-  //     let arc_batch = Arc::new(batch);
-  //
-  //     if row_count < 100 {
-  //       let output =
-  //           QueryResultByBatch::serialize_batch((0..row_count).collect(), Arc::clone(&arc_batch));
-  //       return Ok(Some(output));
-  //     }
-  //
-  //     let threads_count = std::thread::available_parallelism()
-  //         .map(|n| n.get().min(8))
-  //         .unwrap_or(4);
-  //
-  //     let chunk_size = row_count.div_ceil(threads_count);
-  //     let mut handles = Vec::with_capacity(threads_count);
-  //
-  //     for chunk_start in (0..row_count).step_by(chunk_size) {
-  //       let chunk_end = (chunk_start + chunk_size).min(row_count);
-  //       let indices: Vec<usize> = (chunk_start..chunk_end).collect();
-  //       let batch_clone = Arc::clone(&arc_batch);
-  //
-  //       handles.push(spawn(
-  //         async { QueryResultByBatch::serialize_batch(indices, batch_clone) }, // async { QueryResult::serialize_batch_columnar( batch_clone) }
-  //       ));
-  //     }
-  //
-  //     let mut output = Vec::with_capacity(row_count);
-  //     for handle in handles {
-  //       output.extend(handle.await.unwrap());
-  //     }
-  //     //
-  //     // println!(
-  //     //   "Serialization time threaded: {}ms",
-  //     //   Instant::now().duration_since(start).as_millis()
-  //     // );
-  //     Ok(Some(output))
-  //   } else {
-  //     Ok(None)
-  //   }
-  // }
-
-  #[cfg(feature = "napi")]
-  #[napi]
-  pub async unsafe fn next(&mut self) -> napi::Result<Option<String>> {
-    let batch = self.response.next().await;
-
-    if let Some(Ok(batch)) = batch {
-      // println!("THE BATCH IS {:?}", batch);
-      // Read the JSON data
-
-      // Сериализация RecordBatch в JSON
-      let mut buf = Vec::new();
-      {
-        let cursor = Cursor::new(&mut buf);
-        let mut writer = LineDelimitedWriter::new(cursor);
-        writer.write(&batch).unwrap();
-        writer.finish().unwrap();
-      }
-
-      let json_str = String::from_utf8(buf).unwrap();
-      Ok(Some(json_str))
-    } else {
-      Ok(None)
+  pub fn new(response: FlightRecordBatchStream, serializer: Option<Serializer>) -> Self {
+    Self {
+      response,
+      serializer: serializer.unwrap_or(Serializer::Unsafe),
     }
   }
 
-  #[cfg(not(feature = "napi"))]
-  pub async fn next(&mut self) -> napi::Result<Option<String>> {
+  #[cfg(not(feature = "native"))]
+  #[napi]
+  pub async unsafe fn next(
+    &mut self,
+  ) -> napi::Result<Option<Either<Vec<crate::ReturnDataType>, Vec<serde_json::Value>>>> {
     let batch = self.response.next().await;
 
-    if let Some(Ok(batch)) = batch {
-      // println!("THE BATCH IS {:?}", batch);
-      // Read the JSON data
+    match self.serializer {
+      Serializer::Unsafe => {
+        let serialized = unsafe_serialize(batch);
 
-      // Сериализация RecordBatch в JSON
-      let mut buf = Vec::new();
-      {
-        let cursor = Cursor::new(&mut buf);
-        let mut writer = LineDelimitedWriter::new(cursor);
-        writer.write(&batch).unwrap();
-        writer.finish().unwrap();
+        match serialized {
+          Some(s) => Ok(Some(Either::B(s))),
+          None => Ok(None),
+        }
       }
+      Serializer::Library => {
+        if let Some(Ok(batch)) = batch {
+          let row_count = batch.num_rows();
 
-      let json_str = String::from_utf8(buf).unwrap();
-      Ok(Some(json_str))
-    } else {
-      Ok(None)
+          let arc_batch = Arc::new(batch);
+
+          if row_count < 100 {
+            let output =
+                QueryResultByBatch::serialize_batch((0..row_count).collect(), Arc::clone(&arc_batch));
+            return Ok(Some(Either::A(output)));
+          }
+
+          let threads_count = std::thread::available_parallelism()
+              .map(|n| n.get().min(8))
+              .unwrap_or(4);
+
+          let chunk_size = row_count.div_ceil(threads_count);
+          let mut handles = Vec::with_capacity(threads_count);
+
+          for chunk_start in (0..row_count).step_by(chunk_size) {
+            let chunk_end = (chunk_start + chunk_size).min(row_count);
+            let indices: Vec<usize> = (chunk_start..chunk_end).collect();
+            let batch_clone = Arc::clone(&arc_batch);
+
+            handles.push(napi::tokio::spawn(async {
+              QueryResultByBatch::serialize_batch(indices, batch_clone)
+            }));
+          }
+
+          let mut output = Vec::with_capacity(row_count);
+          for handle in handles {
+            output.extend(handle.await.unwrap());
+          }
+          //
+          // println!(
+          //   "Serialization time threaded: {}ms",
+          //   Instant::now().duration_since(start).as_millis()
+          // );
+          Ok(Some(Either::A(output)))
+        } else {
+          Ok(None)
+        }
+      }
+      _ => Ok(None),
+    }
+  }
+
+  #[cfg(feature = "native")]
+  pub async fn next(
+    &mut self,
+  ) -> napi::Result<Option<Either<Vec<crate::ReturnDataType>, Vec<serde_json::Value>>>> {
+    let batch = self.response.next().await;
+
+    match self.serializer {
+      Serializer::Unsafe => {
+        let serialized = unsafe_serialize(batch);
+
+        match serialized {
+          Some(s) => Ok(Some(Either::B(s))),
+          None => Ok(None),
+        }
+      }
+      Serializer::Library => {
+        if let Some(Ok(batch)) = batch {
+          let row_count = batch.num_rows();
+
+          let arc_batch = Arc::new(batch);
+
+          if row_count < 100 {
+            let output =
+              QueryResultByBatch::serialize_batch((0..row_count).collect(), Arc::clone(&arc_batch));
+            return Ok(Some(Either::A(output)));
+          }
+
+          let threads_count = std::thread::available_parallelism()
+            .map(|n| n.get().min(8))
+            .unwrap_or(4);
+
+          let chunk_size = row_count.div_ceil(threads_count);
+          let mut handles = Vec::with_capacity(threads_count);
+
+          for chunk_start in (0..row_count).step_by(chunk_size) {
+            let chunk_end = (chunk_start + chunk_size).min(row_count);
+            let indices: Vec<usize> = (chunk_start..chunk_end).collect();
+            let batch_clone = Arc::clone(&arc_batch);
+
+            handles.push(napi::tokio::spawn(async {
+              QueryResultByBatch::serialize_batch(indices, batch_clone)
+            }));
+          }
+
+          let mut output = Vec::with_capacity(row_count);
+          for handle in handles {
+            output.extend(handle.await.unwrap());
+          }
+          //
+          // println!(
+          //   "Serialization time threaded: {}ms",
+          //   Instant::now().duration_since(start).as_millis()
+          // );
+          Ok(Some(Either::A(output)))
+        } else {
+          Ok(None)
+        }
+      }
+      _ => Ok(None),
     }
   }
 

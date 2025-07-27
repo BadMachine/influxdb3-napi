@@ -6,11 +6,15 @@ use napi::sys::{napi_env, napi_value};
 
 pub mod client;
 pub mod query;
+pub mod serializer;
 
-#[cfg_attr(feature = "napi", napi_derive::napi)]
+
+#[global_allocator]
+static ALLOC: snmalloc_rs::SnMalloc = snmalloc_rs::SnMalloc;
+
+#[cfg_attr(not(feature = "native"), napi_derive::napi)]
 pub type ReturnDataType = HashMap<String, Option<Value>>;
 
-// #[derive(Clone)]
 #[derive(Debug)]
 pub enum Value {
   Time32(i32, String),
@@ -38,7 +42,7 @@ pub enum Value {
 
 static FALLBACK_STR: &str = "<unsupported type>";
 
-#[cfg_attr(feature = "napi", napi_derive::napi)]
+#[cfg_attr(not(feature = "native"), napi_derive::napi)]
 impl ToNapiValue for Value {
   unsafe fn to_napi_value(env: napi_env, val: Self) -> napi::Result<napi_value> {
     match val {

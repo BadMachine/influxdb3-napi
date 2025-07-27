@@ -112,3 +112,4 @@ module.exports.InfluxDbClient = __napiModule.exports.InfluxDbClient
 module.exports.InfluxDBClient = __napiModule.exports.InfluxDBClient
 module.exports.QueryResultByBatch = __napiModule.exports.QueryResultByBatch
 module.exports.QueryType = __napiModule.exports.QueryType
+module.exports.Serializer = __napiModule.exports.Serializer
