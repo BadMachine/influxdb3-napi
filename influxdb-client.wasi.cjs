@@ -110,6 +110,10 @@ const { instance: __napiInstance, module: __wasiModule, napiModule: __napiModule
 module.exports = __napiModule.exports
 module.exports.InfluxDbClient = __napiModule.exports.InfluxDbClient
 module.exports.InfluxDBClient = __napiModule.exports.InfluxDBClient
+module.exports.Point = __napiModule.exports.Point
+module.exports.PointValues = __napiModule.exports.PointValues
 module.exports.QueryResultByBatch = __napiModule.exports.QueryResultByBatch
+module.exports.DEFAULT_WRITE_OPTIONS = __napiModule.exports.DEFAULT_WRITE_OPTIONS
 module.exports.QueryType = __napiModule.exports.QueryType
 module.exports.Serializer = __napiModule.exports.Serializer
+module.exports.TimeUnit = __napiModule.exports.TimeUnit

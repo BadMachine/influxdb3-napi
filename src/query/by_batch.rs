@@ -169,20 +169,21 @@ impl QueryResultByBatch {
     let mut results = Vec::with_capacity(indices.len());
 
     for index in indices {
-      let row = QueryResultByBatch::serialize(index, record_batch.clone());
+      let row = QueryResultByBatch::serialize(index, &record_batch);
       results.push(row);
     }
 
     results
   }
 
-  fn serialize(index: usize, record_batch: Arc<RecordBatch>) -> crate::ReturnDataType {
+  fn serialize(index: usize, record_batch: &Arc<RecordBatch>) -> crate::ReturnDataType {
     let mut return_map: crate::ReturnDataType = HashMap::new();
 
     let schema = record_batch.schema();
+    let columns = record_batch.columns();
 
     for (f_index, field) in schema.fields().iter().enumerate() {
-      let val_set = record_batch.column(f_index);
+      let val_set = &columns[f_index];
       let name = field.name().clone();
 
       let a = val_set.into_data();

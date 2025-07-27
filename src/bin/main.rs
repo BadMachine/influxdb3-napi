@@ -1,3 +1,6 @@
+use napi::tokio;
+use influxdb_client::client::QueryType;
+
 #[tokio::main]
 #[cfg(feature = "native")]
 async fn main(){
@@ -7,20 +10,18 @@ async fn main(){
         Some(influxdb_client::serializer::Serializer::Library)
     );
 
-    let mut response = client.query_batch(String::from("sample-bird-migration-1753351273642"), String::from("SHOW FIELD KEYS"), influxdb_client::client::QueryType::Influxql).await.unwrap();
+    let mut response = client.query_batch(String::from("_internal"), String::from("SELECT * from system.queries WHERE query_text IS NOT NULL LIMIT 2"), QueryType::Sql).await .unwrap();
+    //
+    // if let Ok(res) = response.next().await {
+    //     match res {
+    //         Some(data) => {
+    //             // println!("{:?}", data);
+    //         },
+    //         None => {}
+    //     }
+    // }
 
-    if let Ok(res) = response.next().await {
-        match res {
-            Some(data) => {
-                println!("{:?}", data);
-            },
-            None => {
-                println!("---NO DATA---");
-            }
-        }
-    } else {
-        println!("Error occured :(");
-    }
+    client.write().await;
 }
 
 #[tokio::main]

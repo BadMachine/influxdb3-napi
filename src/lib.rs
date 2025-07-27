@@ -7,10 +7,9 @@ use napi::sys::{napi_env, napi_value};
 pub mod client;
 pub mod query;
 pub mod serializer;
-
-
-#[global_allocator]
-static ALLOC: snmalloc_rs::SnMalloc = snmalloc_rs::SnMalloc;
+pub mod write;
+// #[global_allocator]
+// static ALLOC: snmalloc_rs::SnMalloc = snmalloc_rs::SnMalloc;
 
 #[cfg_attr(not(feature = "native"), napi_derive::napi)]
 pub type ReturnDataType = HashMap<String, Option<Value>>;
