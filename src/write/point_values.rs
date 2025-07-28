@@ -1,6 +1,7 @@
 use std::collections::HashMap;
+use napi_derive::napi;
 
-#[cfg_attr(not(feature = "native"), napi_derive::napi)]
+#[cfg_attr(not(feature = "native"), napi)]
 pub struct PointValues {
     name: Option<String>,
     time: Option<u32>,
@@ -8,48 +9,57 @@ pub struct PointValues {
     fields: HashMap<String, String>,
 }
 
-#[cfg_attr(not(feature = "native"), napi_derive::napi)]
+#[cfg_attr(not(feature = "native"), napi)]
 impl PointValues {
-    #[cfg_attr(not(feature = "native"), napi_derive::napi(constructor))]
-    pub fn new() -> Self {
-        Self {
-            name: None,
-            time: None,
-            tags: HashMap::new(),
-            fields: HashMap::new(),
-        }
-    }
 
-    #[cfg_attr(not(feature = "native"), napi_derive::napi(getter))]
+    #[cfg_attr(not(feature = "native"), napi(getter))]
     pub fn measurement(&self) -> Option<String> {
         self.name.clone()
     }
 
-    #[cfg_attr(not(feature = "native"), napi_derive::napi(getter))]
+    #[cfg_attr(not(feature = "native"), napi(getter))]
     pub fn timestamp(&self) -> Option<u32> {
         self.time
     }
 
-    #[cfg_attr(not(feature = "native"), napi_derive::napi(setter))]
-    #[cfg_attr(not(feature = "native"), napi_derive::napi(js_name = "timestamp"))]
-    pub fn set_timestamp(&mut self, time: u32) -> &mut PointValues {
-        self.time = Some(time);
-        self
-    }
 
     #[cfg_attr(not(feature = "native"), napi_derive::napi)]
+    pub fn set_timestamp(&mut self, time: u32) -> Self {
+        let name = self.name.clone();
+        let tags = self.tags.clone();
+        let fields = self.fields.clone();
+
+        Self {
+            name,
+            time: Some(time),
+            tags,
+            fields,
+        }
+    }
+
+    #[cfg_attr(not(feature = "native"), napi)]
     pub fn get_tag(&self, tag_name: String) -> Option<String> {
         self.tags.get(&tag_name).cloned()
     }
 
-    // #[cfg_attr(not(feature = "native"), napi_derive::napi)]
-    // pub fn set_tag(&mut self, tag_name: String, tag_value: String) -> &mut PointValues {
-    //     self.tags.insert(tag_name, tag_value);
-    //     self
-    // }
+    #[cfg_attr(not(feature = "native"), napi_derive::napi)]
+    pub fn set_tag(&mut self, tag_name: String, tag_value: String) -> Self {
+        let mut tags = self.tags.clone();
+        tags.insert(tag_name, tag_value);
+
+        let fields = self.fields.clone();
+
+        let name = self.name.clone();
+
+        Self {
+            name,
+            time: self.time,
+            tags,
+            fields,
+        }
+    }
 }
 
-#[cfg_attr(not(feature = "native"), napi_derive::napi)]
 impl Default for PointValues {
     fn default() -> Self {
         Self {

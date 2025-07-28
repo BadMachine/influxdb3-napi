@@ -1,14 +1,17 @@
+pub(crate) mod options;
+
 use crate::query::by_batch::QueryResultByBatch;
 
 use std::fmt;
-
+use arrow::ipc::Precision;
 use crate::serializer::Serializer;
-use arrow_flight::{Action, FlightClient, Ticket};
+use arrow_flight::{FlightClient, Ticket};
 use reqwest::header::HeaderMap;
-use reqwest::{Client, ClientBuilder};
-use tokio_stream::StreamExt;
+use reqwest::Client;
 use tonic::codegen::Bytes;
 use tonic::transport::Channel;
+use crate::client::options::{to_header_map, ClientOptions, WriteOptions};
+use crate::write::get_write_path;
 // use tonic_web_wasm_client::Client;
 
 #[napi_derive::napi(string_enum)]
@@ -33,12 +36,14 @@ pub struct InfluxDBClient {
   flight_client: FlightClient,
   serializer: Option<Serializer>,
   http_client: Client,
+  // options: ClientOptions,
 }
+
 
 #[cfg_attr(not(feature = "native"), napi_derive::napi)]
 impl InfluxDBClient {
   #[cfg_attr(not(feature = "native"), napi_derive::napi(constructor))]
-  pub fn new(addr: String, token: Option<String>, serializer: Option<Serializer>) -> Self {
+  pub fn new(addr: String, token: Option<String>, serializer: Option<Serializer>, options: Option<ClientOptions>) -> Self {
     #[cfg(not(feature = "native"))]
     use napi::bindgen_prelude::block_on;
     #[cfg(not(feature = "native"))]
@@ -64,6 +69,7 @@ impl InfluxDBClient {
       flight_client,
       serializer,
       http_client,
+      // options: options.unwrap_or_default()
     }
   }
 
@@ -119,38 +125,15 @@ impl InfluxDBClient {
     Ok(result)
   }
 
-  #[cfg(feature = "native")]
-  pub async fn write(&mut self) {
-    let payload = format!("temperature,location=north value=60.0");
-
-    self
-      .flight_client
-      .add_header("database", "birds")
-      .expect("TODO: panic message");
-
-    let request = Action::new("my_action", payload);
-
-    let mut response = self.flight_client.do_action(request).await.unwrap();
-
-    while let Some(a) = response.next().await {
-      println!("{:?}", a);
-    }
-
-    let descriptor = arrow_flight::FlightDescriptor::new_path(vec![String::from("123")]);
-    //
-    // let a = self.flight_client.do_put(descriptor);
-
-    // self.flight_client.add_header("database", "birds").expect("TODO: panic message");
-    //
-    // let mut response = self.flight_client.do_put(request).await.unwrap();
-    //
-    // while let Some(a) = response.next().await {
-    //   println!("{:?}", a);
-    // }
-
-    // let result = QueryResultByBatch::new(response, self.serializer.clone());
-
-    // Ok(result)
+  #[cfg_attr(not(feature = "native"), napi_derive::napi)]
+  pub async unsafe fn write(&mut self, database: String, write_options: Option<WriteOptions>, org: Option<String>) {
+    let (url, write_options) = get_write_path(database, org, write_options);
+    let headers = to_header_map(&write_options.headers.unwrap_or_default()).unwrap();
+    let response = self.http_client
+    .post(url)
+    .headers(headers)
+    .send()
+    .await;
   }
 }
 

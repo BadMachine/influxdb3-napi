@@ -36,23 +36,6 @@ pub fn unsafe_serialize(batch: Option<arrow_flight::error::Result<RecordBatch>>)
 
     if let Some(Ok(batch)) = batch {
 
-        // SIMD implementation didnt show efficient results
-
-        // // Write the record batch out as a JSON array
-        // let buf = Vec::new();
-        // let mut writer = arrow::json::ArrayWriter::new(buf);
-        // writer.write_batches(&vec![&batch]).unwrap();
-        // writer.finish().unwrap();
-        //
-        // let mut buf = writer.into_inner();
-        //
-        // let st_simd = Instant::now();
-        // let v: sonic_rs::Value = sonic_rs::from_slice(&mut buf).unwrap();
-        // // let v: simd_json::OwnedValue = simd_json::to_owned_value(&mut buf).unwrap();
-        // let end_simd = Instant::now();
-
-        // println!("simd serialization time {:?}", end_simd.duration_since(st_simd).as_millis());
-
         match serde_arrow::from_record_batch::<Vec<serde_json::Value>>(&batch) {
             Ok(parsed) => {
                 Some(parsed)

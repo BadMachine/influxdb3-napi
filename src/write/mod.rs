@@ -1,66 +1,58 @@
+use reqwest::Url;
+use crate::client::options::{Precision, TimeUnitV2, TimeUnitV3, WriteOptions};
+
 pub mod point;
 mod point_values;
 
-use std::collections::HashMap;
-use napi_derive::napi;
+pub fn get_write_path(database: String, org: Option<String>, _write_options: Option<crate::client::options::WriteOptions>) -> (Url, WriteOptions) {
+    let write_options = _write_options.unwrap_or_default();
+    let mut query_params: Vec<(String, String)> = Vec::new();
 
-#[napi_derive::napi(string_enum)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub enum TimeUnit {
-    /// Time in seconds.
-    #[napi(value = "s")]
-    Second,
-    /// Time in milliseconds.
-    #[napi(value = "ms")]
-    Millisecond,
-    /// Time in microseconds.
-    #[napi(value = "us")]
-    Microsecond,
-    /// Time in nanoseconds.
-    #[napi(value = "ns")]
-    Nanosecond,
+    let write_path = match write_options.no_sync {
+        Some(true) => WRITE_V3_PATH,
+        _ => WRITE_V2_PATH,
+    };
+
+    let precision = match write_options.precision {
+        Some(precision) => {
+            match precision {
+                Precision::V3(v3_precision) => {
+                    if write_options.no_sync.is_some() { v3_precision.to_string() } else {
+                        match v3_precision {
+                            TimeUnitV3::Second => { TimeUnitV2::Second.to_string() },
+                            TimeUnitV3::Millisecond => { TimeUnitV2::Millisecond.to_string() },
+                            TimeUnitV3::Microsecond => { TimeUnitV2::Microsecond.to_string() },
+                            TimeUnitV3::Nanosecond => { TimeUnitV2::Nanosecond.to_string() },
+                        }
+                    }
+                }
+                Precision::V2(v2_precision) => {
+                    if write_options.no_sync.is_none() { v2_precision.to_string() } else {
+                        match v2_precision {
+                            TimeUnitV2::Second => TimeUnitV3::Second.to_string(),
+                            TimeUnitV2::Millisecond => TimeUnitV3::Millisecond.to_string(),
+                            TimeUnitV2::Microsecond => TimeUnitV3::Microsecond.to_string(),
+                            TimeUnitV2::Nanosecond => TimeUnitV3::Nanosecond.to_string()
+                        }
+                    }
+                }
+            }
+        }
+        _ => TimeUnitV3::Nanosecond.to_string()
+    };
+
+    query_params.push((String::from("db"), database));
+    query_params.push((String::from(PRECISION_QUERY_NAME), precision));
+
+    match org {
+        Some(org) => query_params.push((String::from("org"), org)),
+        _ => {  }
+    }
+
+
+    (reqwest::Url::parse_with_params(write_path, &query_params).unwrap(), write_options)
 }
 
-#[cfg_attr(not(feature = "native"), napi_derive::napi(object))]
-pub struct WriteOptions {
-    /** Precision to use in writes for timestamp. default ns */
-    pub precision: Option<TimeUnit>,
-    /** HTTP headers that will be sent with every write request */
-    //headers?: {[key: string]: string}
-    pub headers: Option<HashMap<String, String>>,
-    /** When specified, write bodies larger than the threshold are gzipped  */
-    pub gzip_threshold: u32,
-    /**
-    * Instructs the server whether to wait with the response until WAL persistence completes.
-    * noSync=true means faster write but without the confirmation that the data was persisted.
-    *
-    * Note: This option is supported by InfluxDB 3 Core and Enterprise servers only.
-    * For other InfluxDB 3 server types (InfluxDB Clustered, InfluxDB Clould Serverless/Dedicated)
-    * the write operation will fail with an error.
-    *
-    * Default value: false.
-    */
-    pub no_sync: Option<bool>,
-
-    pub default_tags: Option<HashMap<String, String>>,
-}
-
-#[cfg_attr(not(feature = "native"), napi_derive::napi)]
-pub const DEFAULT_WRITE_OPTIONS: WriteOptions = WriteOptions {
-    precision: Some(TimeUnit::Nanosecond),
-    headers: None,
-    gzip_threshold: 1000,
-    no_sync: Some(false),
-    default_tags: None,
-};
-
-// #[cfg_attr(not(feature = "native"), napi_derive::napi)]
-// pub fn get_default_write_options() -> WriteOptions {
-//     WriteOptions {
-//         precision: Some(TimeUnit::Nanosecond),
-//         headers: None,
-//         gzip_threshold: 1000,
-//         no_sync: Some(false),
-//         default_tags: None,
-//     }
-// }
+static WRITE_V3_PATH: &'static str = "/api/v3/write_lp";
+static WRITE_V2_PATH: &'static str = "/api/v2/write";
+static PRECISION_QUERY_NAME: &'static str = "precision";

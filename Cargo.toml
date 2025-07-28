@@ -29,10 +29,30 @@ path = "src/bin/main.rs"
 
 [dependencies]
 getrandom = { version = "0.3", features = ["wasm_js"] }
-napi = { version = "3.1.3", features = ["full","compat-mode","async", "serde-json" ]}
+#napi = { git = "https://github.com/napi-rs/napi-rs.git", features = ["full","compat-mode","async", "serde-json" ]}
+napi = { version = "3.1.3", features = ["full", "experimental"]}
+
 #napi-derive = "3.1.1"
+#napi-derive = { path = "https://github.com/napi-rs/napi-rs.git", features = ["type-def"] }
+#napi = { git = "https://github.com/napi-rs/napi-rs.git", features = [
+#    "napi10",
+#    "serde-json",
+#    "experimental",
+#    "latin1",
+#    "chrono_date",
+#    "object_indexmap",
+#    "tokio",
+#    "async",
+#    "tokio_rt",
+#    "tokio_macros",
+#    "tokio_io_util",
+#    "deferred_trace",
+#    "node_version_detect",
+#    "web_stream",
+#]}
+napi-derive = { version = "3.1.1" }
 reqwest = { version = "0.12", features = ["json"] }
-napi-derive = { git = "https://github.com/napi-rs/napi-rs.git" }
+#napi-derive = { git = "https://github.com/napi-rs/napi-rs.git" }
 tonic = { version = "0.12.3", features = ["gzip"] }
 tokio-stream = "0.1.17"
 arrow = { version = "55.2.0", features = ["json", "arrow-json"]}
@@ -45,8 +65,14 @@ simd-json = "0.15.1"
 snmalloc-rs = "0.3.8"
 tonic-web-wasm-client = "0.7.1"
 
+[target.'cfg(target_family = "wasm")'.dependencies]
+tokio = { version = "1", features = ["rt", "time"] }
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+tokio = { version = "1", features = ["rt", "time", "fs"] }
+
 [build-dependencies]
-napi-build = "2"
+napi-build = "2.2.3"
 
 [profile.release]
 lto = true

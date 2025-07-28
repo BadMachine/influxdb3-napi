@@ -1,8 +1,11 @@
 #![deny(clippy::all)]
+// #[macro_use]
+// extern crate napi_derive;
 
 use std::collections::HashMap;
-use napi::bindgen_prelude::{Null, ToNapiValue};
+use napi::bindgen_prelude::*;
 use napi::sys::{napi_env, napi_value};
+use napi_derive::napi;
 
 pub mod client;
 pub mod query;
@@ -11,7 +14,8 @@ pub mod write;
 // #[global_allocator]
 // static ALLOC: snmalloc_rs::SnMalloc = snmalloc_rs::SnMalloc;
 
-#[cfg_attr(not(feature = "native"), napi_derive::napi)]
+
+#[cfg_attr(not(feature = "native"), napi)]
 pub type ReturnDataType = HashMap<String, Option<Value>>;
 
 #[derive(Debug)]
@@ -41,7 +45,7 @@ pub enum Value {
 
 static FALLBACK_STR: &str = "<unsupported type>";
 
-#[cfg_attr(not(feature = "native"), napi_derive::napi)]
+#[cfg_attr(not(feature = "native"), napi)]
 impl ToNapiValue for Value {
   unsafe fn to_napi_value(env: napi_env, val: Self) -> napi::Result<napi_value> {
     match val {

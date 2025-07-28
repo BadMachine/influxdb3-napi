@@ -1,3 +1,4 @@
+use napi_derive::napi;
 use crate::serializer::not_safe::unsafe_serialize;
 use crate::serializer::Serializer;
 use crate::Value;
@@ -18,13 +19,13 @@ use std::sync::Arc;
 use tokio_stream::StreamExt;
 
 #[derive(Debug)]
-#[cfg_attr(not(feature = "native"), napi_derive::napi)]
+#[cfg_attr(not(feature = "native"), napi)]
 pub struct QueryResultByBatch {
   pub(crate) response: FlightRecordBatchStream,
   pub serializer: Serializer,
 }
 
-#[cfg_attr(not(feature = "native"), napi_derive::napi)]
+#[cfg_attr(not(feature = "native"), napi)]
 impl QueryResultByBatch {
   pub fn new(response: FlightRecordBatchStream, serializer: Option<Serializer>) -> Self {
     Self {
