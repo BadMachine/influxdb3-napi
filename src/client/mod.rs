@@ -126,11 +126,12 @@ impl InfluxDBClient {
   }
 
   #[cfg_attr(not(feature = "native"), napi_derive::napi)]
-  pub async unsafe fn write(&mut self, database: String, write_options: Option<WriteOptions>, org: Option<String>) {
+  pub async unsafe fn write(&mut self, lines: Vec<String>, database: String, write_options: Option<WriteOptions>, org: Option<String>) {
     let (url, write_options) = get_write_path(database, org, write_options);
     let headers = to_header_map(&write_options.headers.unwrap_or_default()).unwrap();
     let response = self.http_client
     .post(url)
+    .body(lines.join("\n"))
     .headers(headers)
     .send()
     .await;

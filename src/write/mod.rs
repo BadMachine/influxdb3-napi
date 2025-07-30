@@ -1,9 +1,6 @@
 use reqwest::Url;
 use crate::client::options::{Precision, TimeUnitV2, TimeUnitV3, WriteOptions};
 
-pub mod point;
-mod point_values;
-
 pub fn get_write_path(database: String, org: Option<String>, _write_options: Option<crate::client::options::WriteOptions>) -> (Url, WriteOptions) {
     let write_options = _write_options.unwrap_or_default();
     let mut query_params: Vec<(String, String)> = Vec::new();

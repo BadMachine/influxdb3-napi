@@ -11,6 +11,7 @@ pub mod client;
 pub mod query;
 pub mod serializer;
 pub mod write;
+mod Point;
 // #[global_allocator]
 // static ALLOC: snmalloc_rs::SnMalloc = snmalloc_rs::SnMalloc;
 

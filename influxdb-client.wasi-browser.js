@@ -61,6 +61,7 @@ export const InfluxDBClient = __napiModule.exports.InfluxDBClient
 export const Point = __napiModule.exports.Point
 export const PointValues = __napiModule.exports.PointValues
 export const QueryResultByBatch = __napiModule.exports.QueryResultByBatch
+export const PointFieldType = __napiModule.exports.PointFieldType
 export const QueryType = __napiModule.exports.QueryType
 export const Serializer = __napiModule.exports.Serializer
 export const TimeUnitV2 = __napiModule.exports.TimeUnitV2
