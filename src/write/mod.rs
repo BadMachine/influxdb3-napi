@@ -1,14 +1,14 @@
+use std::fmt::format;
 use reqwest::Url;
 use crate::client::options::{Precision, TimeUnitV2, TimeUnitV3, WriteOptions};
 
-pub fn get_write_path(database: String, org: Option<String>, _write_options: Option<crate::client::options::WriteOptions>) -> (Url, WriteOptions) {
+pub fn get_write_path(url: &str, database: String, org: Option<String>, _write_options: Option<WriteOptions>) -> napi::Result<(Url, WriteOptions)> {
     let write_options = _write_options.unwrap_or_default();
     let mut query_params: Vec<(String, String)> = Vec::new();
 
-    let write_path = match write_options.no_sync {
-        Some(true) => WRITE_V3_PATH,
-        _ => WRITE_V2_PATH,
-    };
+    let write_path = if write_options.no_sync.unwrap_or(false) { WRITE_V3_PATH } else { WRITE_V2_PATH };
+
+    let final_url = format!("{}{}", url, write_path);
 
     let precision = match write_options.precision {
         Some(precision) => {
@@ -46,8 +46,17 @@ pub fn get_write_path(database: String, org: Option<String>, _write_options: Opt
         _ => {  }
     }
 
+    let url = Url::parse_with_params(final_url.as_str(), &query_params);
 
-    (reqwest::Url::parse_with_params(write_path, &query_params).unwrap(), write_options)
+    match url {
+        Ok(url) => Ok((url, write_options)),
+        Err(e) => {
+            println!("Error occurred in get_write_path: {:?}", e);
+            Err(napi::Error::from_reason("Error parsing URL").into())
+        }
+    }
+
+
 }
 
 static WRITE_V3_PATH: &'static str = "/api/v3/write_lp";

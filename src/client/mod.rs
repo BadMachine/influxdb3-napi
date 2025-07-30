@@ -2,8 +2,8 @@ use futures::stream::TryStreamExt;
 pub(crate) mod options;
 
 use crate::query::by_batch::QueryResultByBatch;
-
-use crate::client::options::{to_header_map, ClientOptions, WriteOptions};
+use crate::Status;
+pub use crate::client::options::{to_header_map, ClientOptions, WriteOptions};
 use crate::serializer::Serializer;
 use crate::write::get_write_path;
 use arrow_flight::{FlightClient, Ticket};
@@ -35,6 +35,7 @@ impl fmt::Display for QueryType {
 
 #[cfg_attr(not(feature = "native"), napi_derive::napi)]
 pub struct InfluxDBClient {
+  addr: String,
   flight_client: FlightClient,
   serializer: Option<Serializer>,
   http_client: Client,
@@ -66,7 +67,7 @@ impl InfluxDBClient {
     });
 
     #[cfg(feature = "native")]
-    let channel = Channel::from_shared(addr)
+    let channel = Channel::from_shared(addr.clone())
       .unwrap()
       .keep_alive_while_idle(true)
       .tls_config(tonic::transport::ClientTlsConfig::new().with_webpki_roots())
@@ -85,6 +86,7 @@ impl InfluxDBClient {
     }
 
     Self {
+      addr,
       flight_client,
       serializer,
       http_client,
@@ -155,8 +157,9 @@ impl InfluxDBClient {
     database: String,
     write_options: Option<WriteOptions>,
     org: Option<String>,
-  ) {
-    let (url, write_options) = get_write_path(database, org, write_options);
+  ) -> napi::Result<()> {
+    let (url, write_options) = get_write_path(&self.addr, database, org, write_options)?;
+
     let headers = to_header_map(&write_options.headers.unwrap_or_default()).unwrap();
     let response = self
         .http_client
@@ -165,6 +168,18 @@ impl InfluxDBClient {
         .headers(headers)
         .send()
         .await;
+
+    match response {
+      Ok(response) => {
+        println!("{:?}", response);
+        Ok(())
+      },
+      Err(error) => {
+        println!("Error occurred: {:?}", error);
+        Err(napi::Error::from_status(Status::Cancelled))
+      }
+    }
+
   }
 
   #[cfg(not(feature = "native"))]

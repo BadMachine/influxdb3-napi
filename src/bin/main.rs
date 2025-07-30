@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use napi::bindgen_prelude::Either5;
 use napi::tokio;
 use napi::tokio::time::Instant;
-use influxdb_client::client::QueryType;
+use influxdb_client::client::{QueryType, WriteOptions };
 use influxdb_client::point::Point;
 
 #[tokio::main]
@@ -11,15 +11,15 @@ async fn main(){
     let mut client = influxdb_client::client::InfluxDBClient::new(
         // String::from("http://165.232.154.186:8195"),
         // Some(String::from("apiv3_64thndtOkGj3gpj5Mc3IwgSN9jKJ6c2Jle4-sJdQwsZ5nIThBjT9ALB0GjEpXvSgt2ZotiQzLbdtbFTEi8S2hg")),
-        String::from("https://us-east-1-1.aws.cloud2.influxdata.com"),
-        Some(String::from("8D4v3HCeOqrrw7dTZa2PZy34484BusR8rDNTKEzMRbQR2ETV-P7YShtS4clGdI3PTai5nG5m8gc5abRihppQuA==")),
+        String::from("http://165.232.154.186:8184"),
+        Some(String::from("apiv3_KvLXBM04k9Ly83GI1ZLbNNaP0Ilh6DfkAN7fIclBTAK2eKG3WlgE4q8lZvlVpiHgR-a7GZntmZvolV1f2Lc6iQ")),
         Some(influxdb_client::serializer::Serializer::Library),
         None
     );
 
     let start = Instant::now();
 
-    let mut response = client.query_batch(String::from("GF HA Data"), String::from("SELECT * FROM car_mileage"), QueryType::Sql).await .unwrap();
+    let mut response = client.query_batch(String::from("_internal"), String::from("SELECT * FROM system.databases"), QueryType::Sql).await .unwrap();
     //
 
     match response.next().await {
@@ -38,7 +38,9 @@ async fn main(){
         }
     }
 
-    let mut point = Point::from_measurement(String::from("test"));
+
+
+    let mut point = Point::from_measurement(String::from("test_measurement"));
 
     let mut fields: HashMap<String, Either5<bool, f64, u32, i64, String>> = HashMap::new();
     fields.insert(String::from("A"), Either5::E(String::from("test")));
@@ -52,9 +54,12 @@ async fn main(){
 
     println!("Line protocol: {:?}", point.to_line_protocol(None, None));
 
-    client.write(vec![point.to_line_protocol(None, None).expect("REASON")], String::from("GF HA Data"), None, None).await;
+    let mut write_options = WriteOptions::default();
+    write_options.no_sync = Some(true);
 
-    // client.write().await;
+    client.write(vec![String::from("cpu,host=server01 usage=85.2 1638360000000")], String::from("test"), Some(write_options), None).await;
+
+
 }
 
 #[tokio::main]
