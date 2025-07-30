@@ -28,7 +28,9 @@ path = "src/bin/main.rs"
 #rustflags = ["--cfg getrandom_backend=\"wasm_js\""]
 
 [dependencies]
-getrandom = { version = "0.3", features = ["wasm_js"] }
+#getrandom = { version = "0.3", features = ["wasm_js"] }
+
+
 #napi = { git = "https://github.com/napi-rs/napi-rs.git", features = ["full","compat-mode","async", "serde-json" ]}
 napi = { version = "3.1.3", features = ["full", "experimental"]}
 
@@ -50,26 +52,25 @@ napi = { version = "3.1.3", features = ["full", "experimental"]}
 #    "node_version_detect",
 #    "web_stream",
 #]}
-napi-derive = { version = "3.1.1" }
-reqwest = { version = "0.12", features = ["json"] }
+napi-derive = { version = "3.1.2" }
+reqwest = { version = "0.12", features = ["json", "__rustls"] }
 #napi-derive = { git = "https://github.com/napi-rs/napi-rs.git" }
-tonic = { version = "0.12.3", features = ["gzip"] }
+tonic = { version = "0.12.3", features = ["gzip", "tls-native-roots", "tls-webpki-roots"] }
 tokio-stream = "0.1.17"
 arrow = { version = "55.2.0", features = ["json", "arrow-json"]}
-arrow-flight = { version = "55.2.0", features = ["flight-sql","flight-sql-experimental","tls","tokio"] }
+arrow-flight = { version = "55.2.0", features = ["flight-sql", "flight-sql-experimental",  "tokio"] }
 serde_json = "1.0.141"
-#serde_json = "1.0.141"
 serde_arrow = { version = "0.13.4", features = ["arrow-55"] }
-sonic-rs = "0.5.3"
-simd-json = "0.15.1"
-snmalloc-rs = "0.3.8"
-tonic-web-wasm-client = "0.7.1"
+#tonic-web-wasm-client = "0.7.1"
+futures = "0.3.31"
 
-[target.'cfg(target_family = "wasm")'.dependencies]
-tokio = { version = "1", features = ["rt", "time"] }
 
-[target.'cfg(not(target_family = "wasm"))'.dependencies]
-tokio = { version = "1", features = ["rt", "time", "fs"] }
+
+#[target.'cfg(target_family = "wasm")'.dependencies]
+#tokio = { version = "1", features = ["rt", "time"] }
+
+#[target.'cfg(not(target_family = "wasm"))'.dependencies]
+#tokio = { version = "1", features = ["rt", "time", "fs"] }
 
 [build-dependencies]
 napi-build = "2.2.3"

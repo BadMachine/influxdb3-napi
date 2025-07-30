@@ -2,8 +2,8 @@ mod escape;
 pub mod point_values;
 
 use crate::client::options::TimeUnitV2;
-use crate::Point::escape::Escaper;
-use crate::Point::point_values::{PointFieldType, PointFieldValue, PointValues};
+use crate::point::escape::Escaper;
+use crate::point::point_values::{PointFieldType, PointFieldValue, PointValues};
 use napi::bindgen_prelude::Either5;
 use napi_derive::napi;
 use std::collections::{HashMap, HashSet};

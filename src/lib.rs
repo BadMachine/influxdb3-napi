@@ -11,7 +11,7 @@ pub mod client;
 pub mod query;
 pub mod serializer;
 pub mod write;
-mod Point;
+pub mod point;
 // #[global_allocator]
 // static ALLOC: snmalloc_rs::SnMalloc = snmalloc_rs::SnMalloc;
 
@@ -19,7 +19,7 @@ mod Point;
 #[cfg_attr(not(feature = "native"), napi)]
 pub type ReturnDataType = HashMap<String, Option<Value>>;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Value {
   Time32(i32, String),
   Time64(i64, String),
