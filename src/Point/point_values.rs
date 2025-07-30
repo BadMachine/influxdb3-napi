@@ -3,48 +3,34 @@ use napi::bindgen_prelude::Either5;
 use napi_derive::napi;
 use std::collections::{BTreeMap, HashMap};
 
-#[napi(string_enum)]
+#[napi(string_enum = "lowercase")]
 #[derive(Debug, Clone, PartialEq)]
 pub enum PointFieldType {
-  #[napi(value = "float")]
   Float,
-  #[napi(value = "integer")]
   Integer,
-  #[napi(value = "uinteger")]
   UInteger,
-  #[napi(value = "string")]
   String,
-  #[napi(value = "boolean")]
   Boolean,
 }
 
-#[napi(discriminant = "type")]
-pub enum FieldEntry {
-  Float(PointFieldType, f64),
-  Integer(PointFieldType, i64),
-  UInteger(PointFieldType, u32),
-  String(PointFieldType, String),
-  Boolean(PointFieldType, bool),
+// #[derive(Debug, Clone, PartialEq)]
+#[napi]
+#[derive(Clone)]
+pub enum PointFieldValue {
+  Float(f64),
+  Integer(i64),
+  UInteger(u32),
+  String(String),
+  Boolean(bool),
 }
 
-impl FieldEntry {
-  pub fn get_type(&self) -> &PointFieldType {
-    match self {
-      FieldEntry::Float(t, _) => t,
-      FieldEntry::Integer(t, _) => t,
-      FieldEntry::UInteger(t, _) => t,
-      FieldEntry::String(t, _) => t,
-      FieldEntry::Boolean(t, _) => t,
-    }
-  }
-}
-
+#[derive(Clone)]
 #[cfg_attr(not(feature = "native"), napi)]
 pub struct PointValues {
   pub(crate) name: Option<String>,
   time: Option<u32>,
   tags: BTreeMap<String, String>,
-  fields: BTreeMap<String, FieldEntry>, //BTreeMap
+  fields: BTreeMap<String, PointFieldValue>, //BTreeMap
 }
 
 #[cfg_attr(not(feature = "native"), napi)]
@@ -64,10 +50,9 @@ impl PointValues {
     self.time = Some(time);
   }
 
-  pub fn get_fields(&self) -> &BTreeMap<String, FieldEntry> {
+  pub fn get_fields(&self) -> &BTreeMap<String, PointFieldValue> {
     &self.fields
   }
-
 
   #[cfg_attr(not(feature = "native"), napi(constructor))]
   pub fn new(measurement: String) -> Self {
@@ -124,9 +109,7 @@ impl PointValues {
 
   #[cfg_attr(not(feature = "native"), napi)]
   pub fn set_float_field(&mut self, name: String, value: f64) {
-    self
-      .fields
-      .insert(name, FieldEntry::Float(PointFieldType::Float, value));
+    self.fields.insert(name, PointFieldValue::Float(value));
   }
 
   #[cfg_attr(not(feature = "native"), napi)]
@@ -142,9 +125,7 @@ impl PointValues {
 
   #[cfg_attr(not(feature = "native"), napi)]
   pub fn set_int_field(&mut self, name: String, value: i64) {
-    self
-      .fields
-      .insert(name, FieldEntry::Integer(PointFieldType::Integer, value));
+    self.fields.insert(name, PointFieldValue::Integer(value));
   }
 
   #[cfg_attr(not(feature = "native"), napi)]
@@ -160,9 +141,7 @@ impl PointValues {
 
   #[cfg_attr(not(feature = "native"), napi)]
   pub fn set_uinteger_field(&mut self, name: String, value: u32) {
-    self
-      .fields
-      .insert(name, FieldEntry::UInteger(PointFieldType::UInteger, value));
+    self.fields.insert(name, PointFieldValue::UInteger(value));
   }
 
   #[cfg_attr(not(feature = "native"), napi)]
@@ -176,9 +155,7 @@ impl PointValues {
 
   #[cfg_attr(not(feature = "native"), napi)]
   pub fn set_string_field(&mut self, name: String, value: String) {
-    self
-      .fields
-      .insert(name, FieldEntry::String(PointFieldType::String, value));
+    self.fields.insert(name, PointFieldValue::String(value));
   }
 
   #[cfg_attr(not(feature = "native"), napi)]
@@ -196,14 +173,21 @@ impl PointValues {
   pub fn set_boolean_field(&mut self, name: String, value: bool) {
     self
       .fields
-      .insert(name, FieldEntry::Boolean(PointFieldType::Boolean, value));
+      .insert(name, PointFieldValue::Boolean(value));
   }
 
   #[cfg_attr(not(feature = "native"), napi)]
   pub fn get_field_type(&self, name: String) -> Option<PointFieldType> {
-    match self.fields.get(&name) {
-      Some(entry) => Some(entry.get_type().clone()),
-      None => None,
+    if let Some(field) = self.fields.get(&name) {
+      match field {
+        PointFieldValue::Float(_) => Some(PointFieldType::Float),
+        PointFieldValue::Integer(_) => Some(PointFieldType::Integer),
+        PointFieldValue::UInteger(_) => Some(PointFieldType::UInteger),
+        PointFieldValue::String(_) => Some(PointFieldType::String),
+        PointFieldValue::Boolean(_) => Some(PointFieldType::Boolean),
+      }
+    } else {
+      None
     }
   }
 
@@ -217,25 +201,44 @@ impl PointValues {
 
     match field_entry {
       Some(field_entry) => {
-        if let Some(expected) = expected_type {
-          if *field_entry.get_type() != expected {
-            return Err(napi::Error::from_reason(format!(
-              "Field '{}' exists but has type {:?}, expected {:?}",
-              name,
-              field_entry.get_type(),
-              expected
-            )));
-          }
+        match field_entry {
+          PointFieldValue::Boolean(b) => {
+            Ok(Some(Either5::A(b)))
+          },
+          PointFieldValue::Float(f) => {
+            Ok(Some(Either5::B(f)))
+          },
+          PointFieldValue::UInteger(u) => {
+            Ok(Some(Either5::C(u)))
+          },
+          PointFieldValue::Integer(i) => {
+            Ok(Some(Either5::D(i)))
+          },
+          PointFieldValue::String(i) => {
+            Ok(Some(Either5::E(i)))
+          },
         }
 
+
+        // if let Some(expected) = expected_type {
+        //   if *field_entry.get_type() != expected {
+        //     return Err(napi::Error::from_reason(format!(
+        //       "Field '{}' exists but has type {:?}, expected {:?}",
+        //       name,
+        //       field_entry.get_type(),
+        //       expected
+        //     )));
+        //   }
+        // }
+
         // Возвращаем значение в соответствующем варианте Either5
-        match field_entry {
-          FieldEntry::Boolean(_, value) => Ok(Some(Either5::A(value))),
-          FieldEntry::Float(_, value) => Ok(Some(Either5::B(value))),
-          FieldEntry::UInteger(_, value) => Ok(Some(Either5::C(value))),
-          FieldEntry::Integer(_, value) => Ok(Some(Either5::D(value))),
-          FieldEntry::String(_, value) => Ok(Some(Either5::E(value))),
-        }
+        // match field_entry {
+        //   FieldEntry::Boolean(_, value) => Ok(Some(Either5::A(value))),
+        //   FieldEntry::Float(_, value) => Ok(Some(Either5::B(value))),
+        //   FieldEntry::UInteger(_, value) => Ok(Some(Either5::C(value))),
+        //   FieldEntry::Integer(_, value) => Ok(Some(Either5::D(value))),
+        //   FieldEntry::String(_, value) => Ok(Some(Either5::E(value))),
+        // }
       }
       None => Ok(None), // Поле не найдено
     }
@@ -257,7 +260,7 @@ impl PointValues {
             field_type
           )));
         }
-        FieldEntry::Boolean(field_type, bool_value)
+        PointFieldValue::Boolean(bool_value)
       }
       Either5::B(float_value) => {
         let field_type = field_type.unwrap_or(PointFieldType::Float);
@@ -267,7 +270,7 @@ impl PointValues {
             field_type
           )));
         }
-        FieldEntry::Float(field_type, float_value)
+        PointFieldValue::Float(float_value)
       }
       Either5::C(uint_value) => {
         let field_type = field_type.unwrap_or(PointFieldType::UInteger);
@@ -277,7 +280,7 @@ impl PointValues {
             field_type
           )));
         }
-        FieldEntry::UInteger(field_type, uint_value)
+        PointFieldValue::UInteger(uint_value)
       }
       Either5::D(int_value) => {
         let field_type = field_type.unwrap_or(PointFieldType::Integer);
@@ -287,7 +290,7 @@ impl PointValues {
             field_type
           )));
         }
-        FieldEntry::Integer(field_type, int_value)
+        PointFieldValue::Integer(int_value)
       }
       Either5::E(string_value) => {
         let field_type = field_type.unwrap_or(PointFieldType::String);
@@ -297,7 +300,7 @@ impl PointValues {
             field_type
           )));
         }
-        FieldEntry::String(field_type, string_value)
+        PointFieldValue::String(string_value)
       }
     };
 

@@ -3,12 +3,13 @@ pub mod point_values;
 
 use crate::client::options::TimeUnitV2;
 use crate::Point::escape::Escaper;
-use crate::Point::point_values::{FieldEntry, PointFieldType, PointValues};
+use crate::Point::point_values::{PointFieldType, PointFieldValue, PointValues};
 use napi::bindgen_prelude::Either5;
 use napi_derive::napi;
 use std::collections::{HashMap, HashSet};
 use std::time::{SystemTime, UNIX_EPOCH};
 
+#[derive(Clone)]
 #[cfg_attr(not(feature = "native"), napi)]
 pub struct Point {
   values: PointValues,
@@ -16,7 +17,6 @@ pub struct Point {
 
 #[cfg_attr(not(feature = "native"), napi)]
 impl Point {
-
   #[cfg_attr(not(feature = "native"), napi(constructor))]
   pub fn new(measurement: String) -> Self {
     let values = PointValues::from_measurement(measurement);
@@ -31,10 +31,10 @@ impl Point {
     Self { values }
   }
 
-  #[cfg_attr(not(feature = "native"), napi(factory))]
-  pub fn from_values(values: PointValues) -> Self {
-    Self { values }
-  }
+  // #[cfg_attr(not(feature = "native"), napi(factory))]
+  // pub fn from_values(values: PointValues) -> Self {
+  //   Self { values }
+  // }
 
   #[cfg_attr(not(feature = "native"), napi(getter))]
   pub fn measurement(&self) -> Option<String> {
@@ -258,19 +258,19 @@ impl Point {
   }
 }
 
-pub fn field_to_line_protocol_string(field: &FieldEntry) -> String {
+pub fn field_to_line_protocol_string(field: &PointFieldValue) -> String {
   match field {
-    FieldEntry::Integer(.., i_value) => format!("{}i", i_value),
-    FieldEntry::Float(.., f_value) => f_value.to_string(),
-    FieldEntry::Boolean(.., b_value) => {
+    PointFieldValue::Integer(.., i_value) => format!("{}i", i_value),
+    PointFieldValue::Float(.., f_value) => f_value.to_string(),
+    PointFieldValue::Boolean(.., b_value) => {
       if *b_value {
         String::from("T")
       } else {
         String::from("F")
       }
     }
-    FieldEntry::String(.., s_value) => Escaper::escape_quoted().escape(s_value),
-    FieldEntry::UInteger(.., u_value) => format!("{}u", u_value),
+    PointFieldValue::String(.., s_value) => Escaper::escape_quoted().escape(s_value),
+    PointFieldValue::UInteger(.., u_value) => format!("{}u", u_value),
   }
 }
 
