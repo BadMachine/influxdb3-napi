@@ -45,7 +45,7 @@
   },
   "scripts": {
     "artifacts": "napi artifacts",
-    "run-binary": "cargo run --color=always --package influxdb_client --bin my-binary --profile dev -F native",
+    "run-binary": "cargo run --color=always --package influxdb_client --bin my-binary -F native -- --production",
     "build-rust-binary": "cargo build --bin my-binary --release",
     "bench": "node --import @oxc-node/core/register benchmark/bench.ts",
     "build": "napi build --platform --release --no-const-enum",

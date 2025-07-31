@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use napi::bindgen_prelude::Either5;
 use napi::tokio;
 use napi::tokio::time::Instant;
-use influxdb_client::client::{QueryType, WriteOptions };
+use influxdb_client::client::{WriteOptions, QueryType};
 use influxdb_client::point::Point;
 
 #[tokio::main]
@@ -19,7 +19,7 @@ async fn main(){
 
     let start = Instant::now();
 
-    let mut response = client.query_batch(String::from("_internal"), String::from("SELECT * FROM system.databases"), QueryType::Sql).await .unwrap();
+    let mut response = client.query_batch(String::from("_internal"), String::from("SELECT * FROM system.databases"), Some(QueryType::Sql)).await .unwrap();
     //
 
     match response.next().await {
@@ -39,6 +39,7 @@ async fn main(){
     }
 
 
+    EscapedStr
 
     let mut point = Point::from_measurement(String::from("test_measurement"));
 

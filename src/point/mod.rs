@@ -162,9 +162,11 @@ impl Point {
     time_precision: Option<TimeUnitV2>,
     default_tags: Option<HashMap<String, String>>,
   ) -> Option<String> {
-    if self.values.measurement().is_none() {
-      return None;
-    };
+    self.values.measurement()?;
+
+    // if self.values.measurement().is_none() {
+    //   return None;
+    // };
 
     let tag_escaper = Escaper::escape_tag();
     let mut fields_line = String::new();
@@ -260,7 +262,7 @@ impl Point {
 
 pub fn field_to_line_protocol_string(field: &PointFieldValue) -> String {
   match field {
-    PointFieldValue::Integer(.., i_value) => format!("{}i", i_value),
+    PointFieldValue::Integer(.., i_value) => format!("{i_value}i"),
     PointFieldValue::Float(.., f_value) => f_value.to_string(),
     PointFieldValue::Boolean(.., b_value) => {
       if *b_value {
@@ -270,7 +272,7 @@ pub fn field_to_line_protocol_string(field: &PointFieldValue) -> String {
       }
     }
     PointFieldValue::String(.., s_value) => Escaper::escape_quoted().escape(s_value),
-    PointFieldValue::UInteger(.., u_value) => format!("{}u", u_value),
+    PointFieldValue::UInteger(.., u_value) => format!("{u_value}u"),
   }
 }
 

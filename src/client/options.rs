@@ -104,18 +104,12 @@ impl Default for WriteOptions {
     }
 }
 
+#[derive(Default)]
 #[cfg_attr(not(feature = "native"), napi_derive::napi(object))]
 pub struct ClientOptions {
     pub write_options: WriteOptions
 }
 
-impl Default for ClientOptions {
-    fn default() -> Self {
-        Self {
-            write_options: WriteOptions::default(),
-        }
-    }
-}
 
 
 pub fn to_header_map(map: &HashMap<String, String>) -> Result<HeaderMap, Box<dyn std::error::Error + Send + Sync>> {

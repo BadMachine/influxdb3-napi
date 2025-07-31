@@ -66,10 +66,10 @@ impl ToNapiValue for Value {
       Value::Null => ToNapiValue::to_napi_value(env, Ok(Null)),
       Value::Bool(bv) => ToNapiValue::to_napi_value(env, Ok(bv)),
       Value::Time32(value, unit) => {
-        ToNapiValue::to_napi_value(env, Ok(format!("{}_{}", value, unit)))
+        ToNapiValue::to_napi_value(env, Ok(format!("{value}_{unit}")))
       }
       Value::Time64(value, unit) => {
-        ToNapiValue::to_napi_value(env, Ok(format!("{}_{}", value, unit)))
+        ToNapiValue::to_napi_value(env, Ok(format!("{value}_{unit}")))
       }
       Value::String(s) => ToNapiValue::to_napi_value(env, s),
       Value::Fallback => ToNapiValue::to_napi_value(env, Ok(FALLBACK_STR)),

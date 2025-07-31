@@ -171,9 +171,7 @@ impl PointValues {
 
   #[cfg_attr(not(feature = "native"), napi)]
   pub fn set_boolean_field(&mut self, name: String, value: bool) {
-    self
-      .fields
-      .insert(name, PointFieldValue::Boolean(value));
+    self.fields.insert(name, PointFieldValue::Boolean(value));
   }
 
   #[cfg_attr(not(feature = "native"), napi)]
@@ -202,23 +200,12 @@ impl PointValues {
     match field_entry {
       Some(field_entry) => {
         match field_entry {
-          PointFieldValue::Boolean(b) => {
-            Ok(Some(Either5::A(b)))
-          },
-          PointFieldValue::Float(f) => {
-            Ok(Some(Either5::B(f)))
-          },
-          PointFieldValue::UInteger(u) => {
-            Ok(Some(Either5::C(u)))
-          },
-          PointFieldValue::Integer(i) => {
-            Ok(Some(Either5::D(i)))
-          },
-          PointFieldValue::String(i) => {
-            Ok(Some(Either5::E(i)))
-          },
+          PointFieldValue::Boolean(b) => Ok(Some(Either5::A(b))),
+          PointFieldValue::Float(f) => Ok(Some(Either5::B(f))),
+          PointFieldValue::UInteger(u) => Ok(Some(Either5::C(u))),
+          PointFieldValue::Integer(i) => Ok(Some(Either5::D(i))),
+          PointFieldValue::String(i) => Ok(Some(Either5::E(i))),
         }
-
 
         // if let Some(expected) = expected_type {
         //   if *field_entry.get_type() != expected {
@@ -256,8 +243,7 @@ impl PointValues {
         let field_type = field_type.unwrap_or(PointFieldType::Boolean);
         if field_type != PointFieldType::Boolean {
           return Err(napi::Error::from_reason(format!(
-            "Type mismatch: provided boolean value but expected type {:?}",
-            field_type
+            "Type mismatch: provided boolean value but expected type {field_type:?}"
           )));
         }
         PointFieldValue::Boolean(bool_value)
@@ -266,8 +252,7 @@ impl PointValues {
         let field_type = field_type.unwrap_or(PointFieldType::Float);
         if field_type != PointFieldType::Float {
           return Err(napi::Error::from_reason(format!(
-            "Type mismatch: provided float value but expected type {:?}",
-            field_type
+            "Type mismatch: provided float value but expected type {field_type:?}"
           )));
         }
         PointFieldValue::Float(float_value)
@@ -276,8 +261,7 @@ impl PointValues {
         let field_type = field_type.unwrap_or(PointFieldType::UInteger);
         if field_type != PointFieldType::UInteger {
           return Err(napi::Error::from_reason(format!(
-            "Type mismatch: provided unsigned integer value but expected type {:?}",
-            field_type
+            "Type mismatch: provided unsigned integer value but expected type {field_type:?}"
           )));
         }
         PointFieldValue::UInteger(uint_value)
@@ -286,8 +270,7 @@ impl PointValues {
         let field_type = field_type.unwrap_or(PointFieldType::Integer);
         if field_type != PointFieldType::Integer {
           return Err(napi::Error::from_reason(format!(
-            "Type mismatch: provided integer value but expected type {:?}",
-            field_type
+            "Type mismatch: provided integer value but expected type {field_type:?}"
           )));
         }
         PointFieldValue::Integer(int_value)
@@ -296,8 +279,7 @@ impl PointValues {
         let field_type = field_type.unwrap_or(PointFieldType::String);
         if field_type != PointFieldType::String {
           return Err(napi::Error::from_reason(format!(
-            "Type mismatch: provided string value but expected type {:?}",
-            field_type
+            "Type mismatch: provided string value but expected type {field_type:?}"
           )));
         }
         PointFieldValue::String(string_value)
@@ -324,8 +306,7 @@ impl PointValues {
     match self.fields.remove(&name) {
       Some(_) => Ok(()),
       None => Err(napi::Error::from_reason(format!(
-        "Field '{}' not found",
-        name
+        "Field '{name}' not found"
       ))),
     }
   }

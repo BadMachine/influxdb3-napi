@@ -36,12 +36,14 @@ impl QueryResultByBatch {
     }
   }
 
-  // /// # Safety
-  // ///
-  // /// This function should not be called before the horsemen are ready.
-  // #[cfg_attr(not(feature = "native"), napi)]
+  // # Safety
+  //
+  // This function should not be called before the horsemen are ready.
   #[cfg(not(feature = "native"))]
   #[napi]
+  // # Safety
+  //
+  // This function should not be called before the horsemen are ready.
   pub async unsafe fn next(
     &mut self,
   ) -> napi::Result<Option<Either<Vec<crate::ReturnDataType>, Vec<serde_json::Value>>>> {
@@ -73,9 +75,9 @@ impl QueryResultByBatch {
 
   // #[cfg(not(feature = "native"))]
   // #[napi]
-  // /// # Safety
-  // ///
-  // /// This function should not be called before the horsemen are ready.
+  // # Safety
+  //
+  // This function should not be called before the horsemen are ready.
   // pub async unsafe fn next(
   //   &mut self,
   // ) -> napi::Result<Option<Either<Vec<crate::ReturnDataType>, Vec<serde_json::Value>>>> {

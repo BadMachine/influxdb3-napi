@@ -8,7 +8,7 @@ pub fn get_write_path(url: &str, database: String, org: Option<String>, _write_o
 
     let write_path = if write_options.no_sync.unwrap_or(false) { WRITE_V3_PATH } else { WRITE_V2_PATH };
 
-    let final_url = format!("{}{}", url, write_path);
+    let final_url = format!("{url}{write_path}");
 
     let precision = match write_options.precision {
         Some(precision) => {
@@ -41,24 +41,21 @@ pub fn get_write_path(url: &str, database: String, org: Option<String>, _write_o
     query_params.push((String::from("db"), database));
     query_params.push((String::from(PRECISION_QUERY_NAME), precision));
 
-    match org {
-        Some(org) => query_params.push((String::from("org"), org)),
-        _ => {  }
-    }
+    if let Some(org) = org { query_params.push((String::from("org"), org)) }
 
     let url = Url::parse_with_params(final_url.as_str(), &query_params);
 
     match url {
         Ok(url) => Ok((url, write_options)),
         Err(e) => {
-            println!("Error occurred in get_write_path: {:?}", e);
-            Err(napi::Error::from_reason("Error parsing URL").into())
+            println!("Error occurred in get_write_path: {e:?}");
+            Err(napi::Error::from_reason("Error parsing URL"))
         }
     }
 
 
 }
 
-static WRITE_V3_PATH: &'static str = "/api/v3/write_lp";
-static WRITE_V2_PATH: &'static str = "/api/v2/write";
-static PRECISION_QUERY_NAME: &'static str = "precision";
+static WRITE_V3_PATH: &str = "/api/v3/write_lp";
+static WRITE_V2_PATH: &str = "/api/v2/write";
+static PRECISION_QUERY_NAME: &str = "precision";

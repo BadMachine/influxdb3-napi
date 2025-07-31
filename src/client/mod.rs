@@ -1,3 +1,4 @@
+
 use futures::stream::TryStreamExt;
 pub(crate) mod options;
 
@@ -9,11 +10,10 @@ use crate::Status;
 use arrow_flight::{FlightClient, Ticket};
 use reqwest::header::HeaderMap;
 use reqwest::Client;
-use std::fmt;
+use std::fmt::Display;
 use std::time::Duration;
 use tonic::codegen::Bytes;
 use tonic::transport::{Channel, Endpoint};
-// use tonic_web_wasm_client::Client;
 
 #[napi_derive::napi(string_enum)]
 pub enum QueryType {
@@ -23,12 +23,13 @@ pub enum QueryType {
   Influxql,
 }
 
-impl fmt::Display for QueryType {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self {
-      QueryType::Sql => write!(f, "sql"),
-      QueryType::Influxql => write!(f, "influxql"),
-    }
+impl Display for QueryType {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    let str = match self {
+      QueryType::Sql => "sql".to_string(),
+      QueryType::Influxql => "influxql".to_string(),
+    };
+    write!(f, "{str}")
   }
 }
 
@@ -69,7 +70,7 @@ impl InfluxDBClient {
 
     if let Some(token) = token {
       flight_client
-        .add_header("authorization", format!("Bearer {}", token).as_str())
+        .add_header("authorization", format!("Bearer {token}").as_str())
         .unwrap();
     }
 
@@ -86,11 +87,12 @@ impl InfluxDBClient {
     &mut self,
     database: String,
     query: String,
-    _type: QueryType,
+    _type: Option<QueryType>,
   ) -> Result<QueryResultByBatch, napi::Error> {
+
     let payload = format!(
       "{{ \"database\": \"{}\", \"sql_query\": \"{}\", \"query_type\": \"{}\" }}",
-      database, query, _type
+      database, query, _type.unwrap_or(QueryType::Sql)
     )
     .replace("\n", " ");
 
@@ -114,7 +116,7 @@ impl InfluxDBClient {
     &mut self,
     database: String,
     query: String,
-    _type: QueryType,
+    _type: Option<QueryType>,
   ) -> Result<QueryResultByBatch, napi::Error> {
     self.query_batch_inner(database, query, _type).await
   }
@@ -124,7 +126,7 @@ impl InfluxDBClient {
     &mut self,
     database: String,
     query: String,
-    _type: QueryType,
+    _type: Option<QueryType>,
   ) -> Result<QueryResultByBatch, napi::Error> {
     self.query_batch_inner(database, query, _type).await
   }
@@ -149,11 +151,11 @@ impl InfluxDBClient {
 
     match response {
       Ok(response) => {
-        println!("{:?}", response);
+        println!("{response:?}");
         Ok(())
       }
       Err(error) => {
-        println!("Error occurred: {:?}", error);
+        println!("Error occurred: {error:?}");
         Err(napi::Error::from_status(Status::Cancelled))
       }
     }
@@ -172,6 +174,9 @@ impl InfluxDBClient {
 
   #[cfg(not(feature = "native"))]
   #[napi_derive::napi]
+  /// # Safety
+  ///
+  /// This function should not be called before the horsemen are ready.
   pub async unsafe fn write(
     &mut self,
     lines: Vec<String>,
@@ -187,7 +192,7 @@ pub fn get_http_client(token: String) -> Client {
   let mut headers = HeaderMap::with_capacity(2);
   headers.insert(
     reqwest::header::AUTHORIZATION,
-    reqwest::header::HeaderValue::from_str(format!("Bearer {}", token).as_str()).expect("REASON"),
+    reqwest::header::HeaderValue::from_str(format!("Bearer {token}").as_str()).expect("REASON"),
   );
   headers.insert(
     reqwest::header::CONTENT_TYPE,

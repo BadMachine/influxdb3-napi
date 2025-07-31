@@ -27,9 +27,15 @@ path = "src/bin/main.rs"
 #[target.wasm32-unknown-unknown]
 #rustflags = ["--cfg getrandom_backend=\"wasm_js\""]
 
+
+[target.'cfg(target_family = "wasm")'.dependencies]
+tokio = { version = "1", features = ["rt", "time", "sync", "macros"] }
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+tokio = { version = "1", features = ["rt", "time", "fs"] }
+
 [dependencies]
 #getrandom = { version = "0.3", features = ["wasm_js"] }
-
 
 #napi = { git = "https://github.com/napi-rs/napi-rs.git", features = ["full","compat-mode","async", "serde-json" ]}
 napi = { version = "3.1.3", features = ["full", "experimental"]}
@@ -52,6 +58,7 @@ napi = { version = "3.1.3", features = ["full", "experimental"]}
 #    "node_version_detect",
 #    "web_stream",
 #]}
+
 napi-derive = { version = "3.1.2" }
 reqwest = { version = "0.12", features = ["json", "__rustls"] }
 #napi-derive = { git = "https://github.com/napi-rs/napi-rs.git" }
@@ -64,21 +71,15 @@ serde_arrow = { version = "0.13.4", features = ["arrow-55"] }
 #tonic-web-wasm-client = "0.7.1"
 futures = "0.3.31"
 
-
-
-#[target.'cfg(target_family = "wasm")'.dependencies]
-#tokio = { version = "1", features = ["rt", "time"] }
-
-#[target.'cfg(not(target_family = "wasm"))'.dependencies]
-#tokio = { version = "1", features = ["rt", "time", "fs"] }
-
 [build-dependencies]
+napi-derive = { version = "3.1.2" }
 napi-build = "2.2.3"
-
-[profile.release]
-lto = true
-strip = "symbols"
 
 [features]
 default = []
 native = []
+
+[profile.release]
+lto = true
+strip = "symbols"
+opt-level = 3

@@ -35,13 +35,13 @@ use arrow::array::RecordBatch;
 pub fn unsafe_serialize(batch: Option<arrow_flight::error::Result<RecordBatch>>) -> Option<Vec<serde_json::Value>> {
 
     if let Some(Ok(batch)) = batch {
-
-        match serde_arrow::from_record_batch::<Vec<serde_json::Value>>(&batch) {
-            Ok(parsed) => {
-                Some(parsed)
-            },
-            _ => None
-        }
+        serde_arrow::from_record_batch::<Vec<serde_json::Value>>(&batch).ok()
+        // match serde_arrow::from_record_batch::<Vec<serde_json::Value>>(&batch) {
+        //     Ok(parsed) => {
+        //         Some(parsed)
+        //     },
+        //     _ => None
+        // }
     } else {
         None
     }
