@@ -1,13 +1,12 @@
 use futures::stream::TryStreamExt;
 pub(crate) mod options;
 
-use crate::query::by_batch::QueryResultByBatch;
-use crate::Status;
 pub use crate::client::options::{to_header_map, ClientOptions, WriteOptions};
+use crate::query::by_batch::QueryResultByBatch;
 use crate::serializer::Serializer;
 use crate::write::get_write_path;
+use crate::Status;
 use arrow_flight::{FlightClient, Ticket};
-use napi::tokio::time::Instant;
 use reqwest::header::HeaderMap;
 use reqwest::Client;
 use std::fmt;
@@ -55,25 +54,14 @@ impl InfluxDBClient {
     use napi::bindgen_prelude::block_on;
     #[cfg(not(feature = "native"))]
     let channel = block_on(async {
-      Channel::from_shared(addr)
-        .unwrap()
-        .keep_alive_while_idle(true)
-        .tls_config(tonic::transport::ClientTlsConfig::new().with_webpki_roots())
-        .unwrap()
-        .keep_alive_timeout(Duration::from_secs(30))
+      get_channel(addr.clone())
         .connect()
         .await
         .expect("error connecting")
     });
 
     #[cfg(feature = "native")]
-    let channel = Channel::from_shared(addr.clone())
-      .unwrap()
-      .keep_alive_while_idle(true)
-      .tls_config(tonic::transport::ClientTlsConfig::new().with_webpki_roots())
-      .unwrap()
-      .keep_alive_timeout(Duration::from_secs(30))
-      .connect_lazy();
+    let channel = get_channel(addr.clone()).connect_lazy();
 
     let http_client = get_http_client(token.clone().unwrap_or(String::from("")));
 
@@ -94,6 +82,29 @@ impl InfluxDBClient {
     }
   }
 
+  pub async fn query_batch_inner(
+    &mut self,
+    database: String,
+    query: String,
+    _type: QueryType,
+  ) -> Result<QueryResultByBatch, napi::Error> {
+    let payload = format!(
+      "{{ \"database\": \"{}\", \"sql_query\": \"{}\", \"query_type\": \"{}\" }}",
+      database, query, _type
+    )
+    .replace("\n", " ");
+
+    let ticket = Ticket {
+      ticket: Bytes::from(payload),
+    };
+
+    let response = self.flight_client.do_get(ticket.clone()).await.unwrap();
+
+    let result = QueryResultByBatch::new(response, self.serializer.clone());
+
+    Ok(result)
+  }
+
   #[cfg(not(feature = "native"))]
   #[napi_derive::napi]
   /// # Safety
@@ -105,21 +116,7 @@ impl InfluxDBClient {
     query: String,
     _type: QueryType,
   ) -> Result<QueryResultByBatch, napi::Error> {
-    let payload = format!(
-      "{{ \"database\": \"{}\", \"sql_query\": \"{}\", \"query_type\": \"{}\" }}",
-      database, query, _type
-    )
-    .replace("\n", " ");
-
-    let ticket = Ticket {
-      ticket: Bytes::from(payload),
-    };
-
-    let response = self.flight_client.do_get(ticket).await.unwrap();
-
-    let result = QueryResultByBatch::new(response, self.serializer.clone());
-
-    Ok(result)
+    self.query_batch_inner(database, query, _type).await
   }
 
   #[cfg(feature = "native")]
@@ -129,25 +126,37 @@ impl InfluxDBClient {
     query: String,
     _type: QueryType,
   ) -> Result<QueryResultByBatch, napi::Error> {
-    let payload = format!(
-      "{{ \"database\": \"{}\", \"sql_query\": \"{}\", \"query_type\": \"{}\" }}",
-      database, query, _type
-    )
-    .replace("\n", " ");
+    self.query_batch_inner(database, query, _type).await
+  }
 
-    let ticket = Ticket {
-      ticket: Bytes::from(payload),
-    };
+  async fn write_inner(
+    &mut self,
+    lines: Vec<String>,
+    database: String,
+    write_options: Option<WriteOptions>,
+    org: Option<String>,
+  ) -> napi::Result<()> {
+    let (url, write_options) = get_write_path(&self.addr, database, org, write_options)?;
 
-    // let start = Instant::now();
+    let headers = to_header_map(&write_options.headers.unwrap_or_default()).unwrap();
+    let response = &self
+      .http_client
+      .post(url)
+      .body(lines.join("\n"))
+      .headers(headers)
+      .send()
+      .await;
 
-    let response = self.flight_client.do_get(ticket.clone()).await.unwrap();
-
-    // println!("Get response time {:?}", start.elapsed());
-
-    let result = QueryResultByBatch::new(response, self.serializer.clone());
-
-    Ok(result)
+    match response {
+      Ok(response) => {
+        println!("{:?}", response);
+        Ok(())
+      }
+      Err(error) => {
+        println!("Error occurred: {:?}", error);
+        Err(napi::Error::from_status(Status::Cancelled))
+      }
+    }
   }
 
   #[cfg(feature = "native")]
@@ -158,28 +167,7 @@ impl InfluxDBClient {
     write_options: Option<WriteOptions>,
     org: Option<String>,
   ) -> napi::Result<()> {
-    let (url, write_options) = get_write_path(&self.addr, database, org, write_options)?;
-
-    let headers = to_header_map(&write_options.headers.unwrap_or_default()).unwrap();
-    let response = self
-        .http_client
-        .post(url)
-        .body(lines.join("\n"))
-        .headers(headers)
-        .send()
-        .await;
-
-    match response {
-      Ok(response) => {
-        println!("{:?}", response);
-        Ok(())
-      },
-      Err(error) => {
-        println!("Error occurred: {:?}", error);
-        Err(napi::Error::from_status(Status::Cancelled))
-      }
-    }
-
+    self.write_inner(lines, database, write_options, org).await
   }
 
   #[cfg(not(feature = "native"))]
@@ -190,16 +178,8 @@ impl InfluxDBClient {
     database: String,
     write_options: Option<WriteOptions>,
     org: Option<String>,
-  ) {
-    let (url, write_options) = get_write_path(database, org, write_options);
-    let headers = to_header_map(&write_options.headers.unwrap_or_default()).unwrap();
-    let response = self
-      .http_client
-      .post(url)
-      .body(lines.join("\n"))
-      .headers(headers)
-      .send()
-      .await;
+  ) -> napi::Result<()> {
+    self.write_inner(lines, database, write_options, org).await
   }
 }
 
@@ -219,4 +199,13 @@ pub fn get_http_client(token: String) -> Client {
     // .use_rustls_tls()
     .build()
     .unwrap()
+}
+
+fn get_channel(addr: String) -> Endpoint {
+  Channel::from_shared(addr)
+    .unwrap()
+    .keep_alive_while_idle(true)
+    .tls_config(tonic::transport::ClientTlsConfig::new().with_webpki_roots())
+    .unwrap()
+    .keep_alive_timeout(Duration::from_secs(30))
 }

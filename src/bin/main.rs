@@ -43,8 +43,8 @@ async fn main(){
     let mut point = Point::from_measurement(String::from("test_measurement"));
 
     let mut fields: HashMap<String, Either5<bool, f64, u32, i64, String>> = HashMap::new();
-    fields.insert(String::from("A"), Either5::E(String::from("test")));
-    fields.insert(String::from("B"), Either5::A(false));
+    fields.insert(String::from("A"), Either5::C(4));
+    fields.insert(String::from("B"), Either5::B(3.));
 
     point.set_fields(fields).expect("TODO: panic message");
 
@@ -57,7 +57,8 @@ async fn main(){
     let mut write_options = WriteOptions::default();
     write_options.no_sync = Some(true);
 
-    client.write(vec![String::from("cpu,host=server01 usage=85.2 1638360000000")], String::from("test"), Some(write_options), None).await;
+    // client.write(vec![String::from("cpu,host=server01 usage=85.2 1638360000000")], String::from("test"), Some(write_options), None).await;
+    client.write(vec![point.to_line_protocol(None, None).unwrap()], String::from("test_line"), Some(write_options), None).await;
 
 
 }
