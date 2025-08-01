@@ -108,10 +108,13 @@ const { instance: __napiInstance, module: __wasiModule, napiModule: __napiModule
   },
 })
 module.exports = __napiModule.exports
+module.exports.AsyncIteratorWrapper = __napiModule.exports.AsyncIteratorWrapper
 module.exports.InfluxDbClient = __napiModule.exports.InfluxDbClient
 module.exports.InfluxDBClient = __napiModule.exports.InfluxDBClient
+module.exports.MyAsyncIterator = __napiModule.exports.MyAsyncIterator
 module.exports.Point = __napiModule.exports.Point
 module.exports.PointValues = __napiModule.exports.PointValues
+module.exports.QueryResult = __napiModule.exports.QueryResult
 module.exports.QueryResultByBatch = __napiModule.exports.QueryResultByBatch
 module.exports.PointFieldType = __napiModule.exports.PointFieldType
 module.exports.QueryType = __napiModule.exports.QueryType

@@ -2,7 +2,8 @@ use std::collections::HashMap;
 use napi::bindgen_prelude::Either5;
 use napi::tokio;
 use napi::tokio::time::Instant;
-use influxdb_client::client::{WriteOptions, QueryType};
+use influxdb_client::client::{WriteOptions};
+use influxdb_client::client::options::QueryType;
 use influxdb_client::point::Point;
 
 #[tokio::main]
@@ -57,7 +58,7 @@ async fn main(){
     write_options.no_sync = Some(true);
 
     // client.write(vec![String::from("cpu,host=server01 usage=85.2 1638360000000")], String::from("test"), Some(write_options), None).await;
-    client.write(vec![point.to_line_protocol(None, None).unwrap()], String::from("test_line"), Some(write_options), None).await;
+    client.write(vec![point.to_line_protocol(None, None).unwrap()], String::from("test_line"), Some(write_options), None).await.expect("TODO: panic message");
 
 
 }

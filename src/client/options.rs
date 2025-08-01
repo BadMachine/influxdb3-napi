@@ -2,6 +2,25 @@ use napi_derive::napi;
 use reqwest::header::{HeaderMap, HeaderName, HeaderValue};
 use std::collections::HashMap;
 use std::fmt;
+use std::fmt::Display;
+
+#[napi_derive::napi(string_enum)]
+pub enum QueryType {
+  #[napi(value = "sql")]
+  Sql,
+  #[napi(value = "influxql")]
+  Influxql,
+}
+
+impl Display for QueryType {
+  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    let str = match self {
+      QueryType::Sql => "sql",
+      QueryType::Influxql => "influxql",
+    };
+    write!(f, "{str}")
+  }
+}
 
 #[napi]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]

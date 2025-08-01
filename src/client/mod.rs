@@ -1,6 +1,4 @@
-
-// use futures::stream::TryStreamExt;
-pub(crate) mod options;
+pub mod options;
 
 pub use crate::client::options::{to_header_map, ClientOptions, WriteOptions};
 use crate::query::by_batch::QueryResultByBatch;
@@ -14,24 +12,7 @@ use std::fmt::Display;
 use std::time::Duration;
 use tonic::codegen::Bytes;
 use tonic::transport::{Channel, Endpoint};
-
-#[napi_derive::napi(string_enum)]
-pub enum QueryType {
-  #[napi(value = "sql")]
-  Sql,
-  #[napi(value = "influxql")]
-  Influxql,
-}
-
-impl Display for QueryType {
-  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-    let str = match self {
-      QueryType::Sql => "sql".to_string(),
-      QueryType::Influxql => "influxql".to_string(),
-    };
-    write!(f, "{str}")
-  }
-}
+use crate::client::options::QueryType;
 
 #[cfg_attr(not(feature = "native"), napi_derive::napi)]
 pub struct InfluxDBClient {
