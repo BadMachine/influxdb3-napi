@@ -7,13 +7,6 @@
 
 use arrow_flight::decode::FlightRecordBatchStream;
 
-use napi::bindgen_prelude::*;
-use napi::bindgen_prelude::async_iterator::AsyncGenerator;
-// use napi;
-// use napi_derive::{napi as napi_derive};
-
-
-
 pub struct QueryResultByRow {
   pub(crate) response: FlightRecordBatchStream,
 }

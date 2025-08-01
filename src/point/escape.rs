@@ -1,48 +1,31 @@
-use std::collections::HashMap;
+use std::fmt;
 
-pub struct Escaper {
-    char_map: HashMap<char, String>,
+// https://docs.influxdata.com/influxdb/cloud/reference/syntax/line-protocol/#special-characters
+pub const COMMA_EQ_SPACE: [char; 3] = [',', '=', ' '];
+pub const COMMA_SPACE: [char; 2] = [',', ' '];
+pub const DOUBLE_QUOTE: [char; 1] = ['"'];
+
+
+pub fn escape<const N: usize>(src: &str, special_characters: [char; N]) -> Escaped<'_, N> {
+    Escaped {
+        src,
+        special_characters,
+    }
 }
 
-impl Escaper {
-    pub fn new(characters: &str, replacements: Vec<&str>) -> Self {
-        let char_map = characters
-            .chars()
-            .zip(replacements.into_iter().map(String::from))
-            .collect();
+pub struct Escaped<'a, const N: usize> {
+    src: &'a str,
+    special_characters: [char; N],
+}
 
-        Self { char_map }
-    }
-
-    pub fn escape(&self, value: &str) -> String {
-        let mut result = String::new();
-        let mut last_end = 0;
-
-        for (i, ch) in value.char_indices() {
-            if let Some(replacement) = self.char_map.get(&ch) {
-                result.push_str(&value[last_end..i]);
-                result.push_str(replacement);
-                last_end = i + ch.len_utf8();
+impl<const N: usize> fmt::Display for Escaped<'_, N> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for ch in self.src.chars() {
+            if self.special_characters.contains(&ch) || ch == '\\' {
+                write!(f, "\\")?;
             }
+            write!(f, "{ch}")?;
         }
-
-        if last_end == 0 {
-            value.to_string()
-        } else {
-            result.push_str(&value[last_end..]);
-            result
-        }
-    }
-
-    pub fn escape_measurement() -> Self {
-        Escaper::new(", \n\r\t", vec!["\\,", "\\ ", "\\n", "\\r", "\\t"])
-    }
-
-    pub fn escape_quoted() -> Self {
-        Escaper::new("\"\\", vec!["\\\"", "\\\\"])
-    }
-
-    pub fn escape_tag() -> Self {
-        Escaper::new(", =\n\r\t", vec!["\\,", "\\ ", "\\=", "\\n", "\\r", "\\t"])
+        Ok(())
     }
 }

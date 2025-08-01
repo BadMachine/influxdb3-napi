@@ -1,7 +1,10 @@
 use napi::bindgen_prelude::Either5;
 
 use napi_derive::napi;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::{ HashMap };
+use std::fmt;
+use std::fmt::{Display, Formatter};
+use crate::point::escape::{escape, DOUBLE_QUOTE};
 
 #[napi(string_enum = "lowercase")]
 #[derive(Debug, Clone, PartialEq)]
@@ -24,13 +27,25 @@ pub enum PointFieldValue {
   Boolean(bool),
 }
 
+impl Display for PointFieldValue {
+  fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    match self {
+      PointFieldValue::Integer(.., i_value) => write!(f, "{i_value}i"),
+      PointFieldValue::Float(.., f_value) => write!(f, "{f_value}"),
+      PointFieldValue::Boolean(.., b_value) => write!(f, "{b_value}"),
+      PointFieldValue::String(.., s_value) => write!(f, "{}", escape(s_value, DOUBLE_QUOTE).to_string()),
+      PointFieldValue::UInteger(.., u_value) => write!(f, "{u_value}u"),
+    }
+  }
+}
+
 #[derive(Clone)]
 #[cfg_attr(not(feature = "native"), napi)]
 pub struct PointValues {
   pub(crate) name: Option<String>,
   time: Option<u32>,
-  tags: BTreeMap<String, String>,
-  fields: BTreeMap<String, PointFieldValue>, //BTreeMap
+  tags: HashMap<String, String>,
+  fields: HashMap<String, PointFieldValue>, //BTreeMap
 }
 
 #[cfg_attr(not(feature = "native"), napi)]
@@ -50,7 +65,7 @@ impl PointValues {
     self.time = Some(time);
   }
 
-  pub fn get_fields(&self) -> &BTreeMap<String, PointFieldValue> {
+  pub fn get_fields(&self) -> &HashMap<String, PointFieldValue> {
     &self.fields
   }
 
@@ -59,8 +74,8 @@ impl PointValues {
     Self {
       name: Some(measurement),
       time: None,
-      tags: BTreeMap::new(),
-      fields: BTreeMap::new(),
+      tags: HashMap::new(),
+      fields: HashMap::new(),
     }
   }
 
@@ -69,8 +84,8 @@ impl PointValues {
     Self {
       name: Some(measurement),
       time: None,
-      tags: BTreeMap::new(),
-      fields: BTreeMap::new(),
+      tags: HashMap::new(),
+      fields: HashMap::new(),
     }
   }
 

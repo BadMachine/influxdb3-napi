@@ -46,7 +46,7 @@
   "scripts": {
     "artifacts": "napi artifacts",
     "run-binary": "cargo run --color=always --package influxdb_client --bin my-binary -F native -- --production",
-    "build-rust-binary": "cargo build --bin my-binary --release",
+    "build-rust-binary": "cargo build --bin my-binary -F native --release",
     "bench": "node --import @oxc-node/core/register benchmark/bench.ts",
     "build": "napi build --platform --release --no-const-enum",
     "build:wasm-unknown": "napi build --platform --release -t wasm32-unknown-unknown",

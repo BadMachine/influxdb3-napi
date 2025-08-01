@@ -1,6 +1,6 @@
 
 [package]
-authors = ["LongYinan <lynweklm@gmail.com>"]
+authors = ["BadMachine <iskullbreakeri@gmail.com>"]
 edition = "2021"
 name = "influxdb_client"
 version = "0.1.0"
@@ -12,64 +12,20 @@ crate-type = ["cdylib", "rlib"]
 name = "my-binary"
 path = "src/bin/main.rs"
 
-#[patch.crates-io]
-#getrandom = { version = "0.2.14", features = ["full"] }
-
-#[target.'cfg(not(target_arch = "wasm32*"))'.dependencies]
-#tokio = { version = "1.47.0", features = ["rt", "rt-multi-thread", "macros"] }
-#
-#[target.'cfg(target_arch = "wasm32-unknown-unknown")'.dependencies]
-#tokio = { version = "1.47.0", features = ["rt", "macros"] }
-#
-#[target.'cfg(target_arch = "wasm32-wasip2")'.dependencies]
-#tokio = { version = "1.47.0", features = ["rt", "macros"] }
-#
-#[target.wasm32-unknown-unknown]
-#rustflags = ["--cfg getrandom_backend=\"wasm_js\""]
-
-
-[target.'cfg(target_family = "wasm")'.dependencies]
-tokio = { version = "1", features = ["rt", "time", "sync", "macros"] }
-
-[target.'cfg(not(target_family = "wasm"))'.dependencies]
-tokio = { version = "1", features = ["rt", "time", "fs"] }
-
 [dependencies]
-#getrandom = { version = "0.3", features = ["wasm_js"] }
-
-#napi = { git = "https://github.com/napi-rs/napi-rs.git", features = ["full","compat-mode","async", "serde-json" ]}
-napi = { version = "3.1.3", features = ["full", "experimental"]}
-
-#napi-derive = "3.1.1"
-#napi-derive = { path = "https://github.com/napi-rs/napi-rs.git", features = ["type-def"] }
-#napi = { git = "https://github.com/napi-rs/napi-rs.git", features = [
-#    "napi10",
-#    "serde-json",
-#    "experimental",
-#    "latin1",
-#    "chrono_date",
-#    "object_indexmap",
-#    "tokio",
-#    "async",
-#    "tokio_rt",
-#    "tokio_macros",
-#    "tokio_io_util",
-#    "deferred_trace",
-#    "node_version_detect",
-#    "web_stream",
-#]}
-
+napi = { version = "3.1.6", features = ["full", "experimental", "tokio"]}
 napi-derive = { version = "3.1.2" }
 reqwest = { version = "0.12", features = ["json", "__rustls"] }
-#napi-derive = { git = "https://github.com/napi-rs/napi-rs.git" }
 tonic = { version = "0.12.3", features = ["gzip", "tls-native-roots", "tls-webpki-roots"] }
 tokio-stream = "0.1.17"
-arrow = { version = "55.2.0", features = ["json", "arrow-json"]}
-arrow-flight = { version = "55.2.0", features = ["flight-sql", "flight-sql-experimental",  "tokio"] }
+arrow = { version = "55.2.0", features = ["arrow-json"]}
+arrow-flight = { version = "55.2.0", features = ["flight-sql"] }
 serde_json = "1.0.141"
 serde_arrow = { version = "0.13.4", features = ["arrow-55"] }
-#tonic-web-wasm-client = "0.7.1"
-futures = "0.3.31"
+
+#futures = "0.3.31"
+#influxdb-line-protocol = { git = "https://github.com/influxdata/influxdb3_core", subdir = "influxdb_line_protocol" }
+
 
 [build-dependencies]
 napi-derive = { version = "3.1.2" }
@@ -83,3 +39,4 @@ native = []
 lto = true
 strip = "symbols"
 opt-level = 3
+debug = "none"

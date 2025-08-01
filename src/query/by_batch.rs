@@ -17,7 +17,6 @@ use napi::Either;
 use napi_derive::napi;
 use std::collections::HashMap;
 use std::sync::Arc;
-use napi::tokio::time::Instant;
 use tokio_stream::StreamExt;
 
 #[derive(Debug)]
@@ -36,111 +35,24 @@ impl QueryResultByBatch {
     }
   }
 
-  // # Safety
-  //
-  // This function should not be called before the horsemen are ready.
   #[cfg(not(feature = "native"))]
-  #[napi]
   // # Safety
   //
   // This function should not be called before the horsemen are ready.
   pub async unsafe fn next(
     &mut self,
   ) -> napi::Result<Option<Either<Vec<crate::ReturnDataType>, Vec<serde_json::Value>>>> {
-    let batch = self.response.next().await;
-
-    match self.serializer {
-      Serializer::Unsafe => {
-        let serialized = unsafe_serialize(batch);
-
-        match serialized {
-          Some(s) => Ok(Some(Either::B(s))),
-          None => Ok(None),
-        }
-      }
-      Serializer::Library => {
-        if let Some(Ok(batch)) = batch {
-          let arc_batch = Arc::new(batch);
-
-          let result = QueryResultByBatch::serialize_batch_columnwise(arc_batch).await;
-
-          Ok(Some(Either::A(result)))
-        } else {
-          Ok(None)
-        }
-      }
-      _ => Ok(None),
-    }
+    self.next_inner().await
   }
-
-  // #[cfg(not(feature = "native"))]
-  // #[napi]
-  // # Safety
-  //
-  // This function should not be called before the horsemen are ready.
-  // pub async unsafe fn next(
-  //   &mut self,
-  // ) -> napi::Result<Option<Either<Vec<crate::ReturnDataType>, Vec<serde_json::Value>>>> {
-  //   let batch = self.response.next().await;
-  //
-  //   match self.serializer {
-  //     Serializer::Unsafe => {
-  //       let serialized = unsafe_serialize(batch);
-  //
-  //       match serialized {
-  //         Some(s) => Ok(Some(Either::B(s))),
-  //         None => Ok(None),
-  //       }
-  //     }
-  //     Serializer::Library => {
-  //       if let Some(Ok(batch)) = batch {
-  //         let row_count = batch.num_rows();
-  //
-  //         let arc_batch = Arc::new(batch);
-  //
-  //         if row_count < 100 {
-  //           let output =
-  //             QueryResultByBatch::serialize_batch((0..row_count).collect(), Arc::clone(&arc_batch));
-  //           return Ok(Some(Either::A(output)));
-  //         }
-  //
-  //         let threads_count = std::thread::available_parallelism()
-  //           .map(|n| n.get().min(8))
-  //           .unwrap_or(4);
-  //
-  //         let chunk_size = row_count.div_ceil(threads_count);
-  //         let mut handles = Vec::with_capacity(threads_count);
-  //
-  //         for chunk_start in (0..row_count).step_by(chunk_size) {
-  //           let chunk_end = (chunk_start + chunk_size).min(row_count);
-  //           let indices: Vec<usize> = (chunk_start..chunk_end).collect();
-  //           let batch_clone = Arc::clone(&arc_batch);
-  //
-  //           handles.push(napi::tokio::spawn(async {
-  //             QueryResultByBatch::serialize_batch(indices, batch_clone)
-  //           }));
-  //         }
-  //
-  //         let mut output = Vec::with_capacity(row_count);
-  //         for handle in handles {
-  //           output.extend(handle.await.unwrap());
-  //         }
-  //         //
-  //         // println!(
-  //         //   "Serialization time threaded: {}ms",
-  //         //   Instant::now().duration_since(start).as_millis()
-  //         // );
-  //         Ok(Some(Either::A(output)))
-  //       } else {
-  //         Ok(None)
-  //       }
-  //     }
-  //     _ => Ok(None),
-  //   }
-  // }
 
   #[cfg(feature = "native")]
   pub async fn next(
+    &mut self,
+  ) -> napi::Result<Option<Either<Vec<crate::ReturnDataType>, Vec<serde_json::Value>>>> {
+    self.next_inner().await
+  }
+
+  pub async fn next_inner(
     &mut self,
   ) -> napi::Result<Option<Either<Vec<crate::ReturnDataType>, Vec<serde_json::Value>>>> {
 
@@ -178,15 +90,6 @@ impl QueryResultByBatch {
           },
           None => Ok(None)
         }
-        // if let Some(Ok(batch)) = batch {
-        //   let arc_batch = Arc::new(batch);
-        //
-        //   let result = QueryResultByBatch::serialize_batch_columnwise(arc_batch).await;
-        //
-        //   Ok(Some(Either::A(result)))
-        // } else {
-        //   Ok(None)
-        // }
       }
       _ => Ok(None),
     }

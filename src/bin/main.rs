@@ -37,9 +37,7 @@ async fn main(){
             println!("Error occurred while the request {}", e);
         }
     }
-
-
-    EscapedStr
+    
 
     let mut point = Point::from_measurement(String::from("test_measurement"));
 
@@ -67,6 +65,6 @@ async fn main(){
 #[tokio::main]
 #[cfg(not(feature = "native"))]
 async fn main(){
-    println!("Not compiled yet");
+    println!("Not implemented yet");
 
 }

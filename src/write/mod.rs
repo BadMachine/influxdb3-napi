@@ -1,4 +1,3 @@
-use std::fmt::format;
 use reqwest::Url;
 use crate::client::options::{Precision, TimeUnitV2, TimeUnitV3, WriteOptions};
 

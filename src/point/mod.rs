@@ -2,11 +2,12 @@ mod escape;
 pub mod point_values;
 
 use crate::client::options::TimeUnitV2;
-use crate::point::escape::Escaper;
+use crate::point::escape::{escape, COMMA_EQ_SPACE, COMMA_SPACE};
 use crate::point::point_values::{PointFieldType, PointFieldValue, PointValues};
 use napi::bindgen_prelude::Either5;
 use napi_derive::napi;
 use std::collections::{HashMap, HashSet};
+use std::fmt::Display;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 #[derive(Clone)]
@@ -168,11 +169,9 @@ impl Point {
     //   return None;
     // };
 
-    let tag_escaper = Escaper::escape_tag();
     let mut fields_line = String::new();
     //  Sort method omitted here, bc of BTreeMap
     for (field_name, field_entry) in self.values.get_fields() {
-      let line_protocol_value = field_to_line_protocol_string(field_entry);
       if !fields_line.is_empty() {
         fields_line.push(',')
       };
@@ -180,8 +179,9 @@ impl Point {
       fields_line.push_str(
         format!(
           "{}={}",
-          tag_escaper.escape(field_name),
-          &line_protocol_value
+          escape(field_name, COMMA_EQ_SPACE),
+          // escape(&line_protocol_value, COMMA_EQ_SPACE)
+          &field_entry
         )
         .as_str(),
       );
@@ -207,7 +207,14 @@ impl Point {
         if !name.is_empty() {
           if let Some(val) = default_tags.get(name) {
             tags_line.push(',');
-            tags_line.push_str(format!("{}={}", tag_escaper.escape(name), &val).as_str());
+            tags_line.push_str(
+              format!(
+                "{}={}",
+                escape(name, COMMA_EQ_SPACE),
+                escape(val, COMMA_EQ_SPACE)
+              )
+              .as_str(),
+            );
           }
         }
       }
@@ -220,7 +227,7 @@ impl Point {
         let value = self.values.get_tag(name.clone());
         if let Some(val) = value {
           tags_line.push(',');
-          tags_line.push_str(format!("{}={}", tag_escaper.escape(&name), &val).as_str());
+          tags_line.push_str(format!("{}={}", escape(&name, COMMA_EQ_SPACE), &val).as_str());
         }
       }
     });
@@ -243,49 +250,158 @@ impl Point {
       }
     };
 
-    let measurement_escaper = Escaper::escape_measurement();
-
     Some(format!(
       "{}{} {} {}",
-      measurement_escaper.escape(self.values.measurement().unwrap().as_str()),
+      escape(self.values.measurement()?.as_str(), COMMA_SPACE),
       &tags_line,
       &fields_line,
       &time
     ))
   }
 
-  #[cfg_attr(not(feature = "native"), napi)]
-  pub fn to_string(&self) -> String {
-    self.to_line_protocol(None, None).unwrap_or_default()
+  // #[cfg_attr(not(feature = "native"), napi)]
+  // pub fn to_string(&self) -> String {
+  //   self.to_line_protocol(None, None).unwrap_or_default()
+  // }
+}
+
+#[napi]
+impl Display for Point {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    write!(
+      f,
+      "{}",
+      self.to_line_protocol(None, None).unwrap_or_default()
+    )
   }
 }
 
-pub fn field_to_line_protocol_string(field: &PointFieldValue) -> String {
-  match field {
-    PointFieldValue::Integer(.., i_value) => format!("{i_value}i"),
-    PointFieldValue::Float(.., f_value) => f_value.to_string(),
-    PointFieldValue::Boolean(.., b_value) => {
-      if *b_value {
-        String::from("T")
-      } else {
-        String::from("F")
-      }
-    }
-    PointFieldValue::String(.., s_value) => Escaper::escape_quoted().escape(s_value),
-    PointFieldValue::UInteger(.., u_value) => format!("{u_value}u"),
+#[cfg(test)]
+mod tests {
+  use super::*;
+  use crate::point::escape::{escape, DOUBLE_QUOTE};
+
+  #[test]
+  fn test_string_escape() {
+    assert_eq!(
+      format!("\"{}\"", escape(r#"foo"#, DOUBLE_QUOTE)),
+      r#""foo""#
+    );
+    assert_eq!(
+      format!("\"{}\"", escape(r"foo \ bar", DOUBLE_QUOTE)),
+      r#""foo \\ bar""#
+    );
+    assert_eq!(
+      format!("\"{}\"", escape(r#"foo " bar"#, DOUBLE_QUOTE)),
+      r#""foo \" bar""#
+    );
+    assert_eq!(
+      format!("\"{}\"", escape(r#"foo \" bar"#, DOUBLE_QUOTE)),
+      r#""foo \\\" bar""#
+    );
+  }
+
+  #[test]
+  fn test_lp_builder() {
+    const PLAIN: &str = "plain";
+    const WITH_SPACE: &str = "with space";
+    const WITH_COMMA: &str = "with,comma";
+    const WITH_EQ: &str = "with=eq";
+    const WITH_DOUBLE_QUOTE: &str = r#"with"doublequote"#;
+    const WITH_SINGLE_QUOTE: &str = "with'singlequote";
+    const WITH_BACKSLASH: &str = r"with\ backslash";
+
+    let mut line_one = Point::from_measurement("tag_keys".to_string());
+
+    line_one.set_tag(PLAIN.to_string(), "dummy".to_string());
+    line_one.set_tag(WITH_SPACE.to_string(), "dummy".to_string());
+    line_one.set_tag(WITH_COMMA.to_string(), "dummy".to_string());
+    line_one.set_tag(WITH_EQ.to_string(), "dummy".to_string());
+    line_one.set_tag(WITH_DOUBLE_QUOTE.to_string(), "dummy".to_string());
+    line_one.set_tag(WITH_SINGLE_QUOTE.to_string(), "dummy".to_string());
+    line_one.set_tag(WITH_BACKSLASH.to_string(), "dummy".to_string());
+    line_one.set_boolean_field("dummy".to_string(), true);
+
+    let mut line_two = Point::from_measurement("tag_values".to_string());
+
+    line_two.set_tag("plain".to_string(), PLAIN.to_string());
+    line_two.set_tag("withspace".to_string(), WITH_SPACE.to_string());
+    line_two.set_tag("withcomma".to_string(), WITH_COMMA.to_string());
+    line_two.set_tag("witheq".to_string(), WITH_EQ.to_string());
+    line_two.set_tag("withdoublequote".to_string(), WITH_DOUBLE_QUOTE.to_string());
+    line_two.set_tag("withsinglaquote".to_string(), WITH_SINGLE_QUOTE.to_string());
+    line_two.set_tag("withbackslash".to_string(), WITH_BACKSLASH.to_string());
+    line_two.set_boolean_field("dummy".to_string(), true);
+
+    let mut line_three = Point::from_measurement("field keys".to_string());
+
+    line_three.set_boolean_field(PLAIN.to_string(), true);
+    line_three.set_boolean_field(WITH_SPACE.to_string(), true);
+    line_three.set_boolean_field(WITH_COMMA.to_string(), true);
+    line_three.set_boolean_field(WITH_EQ.to_string(), true);
+    line_three.set_boolean_field(WITH_DOUBLE_QUOTE.to_string(), true);
+    line_three.set_boolean_field(WITH_SINGLE_QUOTE.to_string(), true);
+    line_three.set_boolean_field(WITH_BACKSLASH.to_string(), true);
+
+    let mut line_four = Point::from_measurement("field values".to_string());
+
+    line_four.set_boolean_field("mybool".to_string(), false);
+    line_four.set_int_field("mysigned".to_string(), 51_i64);
+    line_four.set_uinteger_field("myunsigned".to_string(), 51_u32);
+    line_four.set_float_field("myfloat".to_string(), 51.0);
+    line_four.set_string_field("mystring".to_string(), "some value".to_string());
+    line_four.set_string_field(
+      "mystringwithquotes".to_string(),
+      "some \" value".to_string(),
+    );
+
+    let mut line_five = Point::from_measurement(PLAIN.to_string());
+    line_five.set_boolean_field("dummy".to_string(), true);
+
+    let mut line_six = Point::from_measurement(WITH_SPACE.to_string());
+    line_six.set_boolean_field("dummy".to_string(), true);
+
+    let mut line_seven = Point::from_measurement(WITH_COMMA.to_string());
+    line_seven.set_boolean_field("dummy".to_string(), true);
+
+    let mut line_eight = Point::from_measurement(WITH_EQ.to_string());
+    line_eight.set_boolean_field("dummy".to_string(), true);
+
+    let mut line_nine = Point::from_measurement(WITH_DOUBLE_QUOTE.to_string());
+    line_nine.set_boolean_field("dummy".to_string(), true);
+
+    let mut line_ten = Point::from_measurement(WITH_SINGLE_QUOTE.to_string());
+    line_ten.set_boolean_field("dummy".to_string(), true);
+
+    let mut line_eleven = Point::from_measurement(WITH_BACKSLASH.to_string());
+    line_eleven.set_boolean_field("dummy".to_string(), true);
+
+    let mut line_twelve = Point::from_measurement("without timestamp".to_string());
+    line_twelve.set_boolean_field("dummy".to_string(), true);
+
+    let mut line_thirteen = Point::from_measurement("with timestamp".to_string());
+    line_thirteen.set_boolean_field("dummy".to_string(), true);
+    line_thirteen.set_timestamp(1234);
+
+    let lines: [Point; 13] = [
+      line_one,
+      line_two,
+      line_three,
+      line_four,
+      line_five,
+      line_six,
+      line_seven,
+      line_eight,
+      line_nine,
+      line_ten,
+      line_eleven,
+      line_twelve,
+      line_thirteen,
+    ];
+    let lp: Vec<String> = lines
+      .into_iter()
+      .map(|l| l.to_line_protocol(None, None).unwrap())
+      .collect();
+    println!("-----\n{}-----", lp.join("\n"));
   }
 }
-
-// #[cfg_attr(not(feature = "native"), napi)]
-// impl From<String> for Point {
-//     fn from(measurement: String) -> Self {
-//         Self { measurement }
-//     }
-// }
-//
-// #[cfg_attr(not(feature = "native"), napi)]
-// impl From<PointValues> for Point {
-//     fn from(point_values: PointValues) -> Self {
-//         Self { measurement, values: point_values }
-//     }
-// }

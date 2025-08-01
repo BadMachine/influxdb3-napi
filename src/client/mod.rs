@@ -1,5 +1,5 @@
 
-use futures::stream::TryStreamExt;
+// use futures::stream::TryStreamExt;
 pub(crate) mod options;
 
 pub use crate::client::options::{to_header_map, ClientOptions, WriteOptions};
