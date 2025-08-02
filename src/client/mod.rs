@@ -17,7 +17,7 @@ use crate::client::options::QueryType;
 pub struct InfluxDBClient {
   addr: String,
   flight_client: FlightClient,
-  serializer: Option<Serializer>,
+  serializer: Serializer,
   http_client: Client,
   // options: ClientOptions,
 }
@@ -57,7 +57,7 @@ impl InfluxDBClient {
     Self {
       addr,
       flight_client,
-      serializer,
+      serializer: serializer.unwrap_or(Serializer::Unsafe),
       http_client,
       // options: options.unwrap_or_default()
     }
@@ -80,8 +80,7 @@ impl InfluxDBClient {
       ticket: Bytes::from(payload),
     };
 
-
-    let response = self.flight_client.do_get(ticket.clone()).await.unwrap();
+    let response = self.flight_client.do_get(ticket).await.unwrap();
 
     let result = QueryResultByBatch::new(response, self.serializer.clone());
 

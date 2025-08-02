@@ -17,7 +17,7 @@ use napi::Either;
 use napi_derive::napi;
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio_stream::StreamExt;
+use tonic::codegen::tokio_stream::StreamExt;
 
 #[derive(Debug)]
 #[cfg_attr(not(feature = "native"), napi)]
@@ -28,10 +28,10 @@ pub struct QueryResultByBatch {
 
 #[cfg_attr(not(feature = "native"), napi)]
 impl QueryResultByBatch {
-  pub fn new(response: FlightRecordBatchStream, serializer: Option<Serializer>) -> Self {
+  pub fn new(response: FlightRecordBatchStream, serializer: Serializer) -> Self {
     Self {
       response,
-      serializer: serializer.unwrap_or(Serializer::Unsafe),
+      serializer,
     }
   }
 
