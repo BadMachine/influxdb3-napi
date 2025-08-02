@@ -83,7 +83,7 @@ impl QueryResultByBatch {
                 Ok(Some(Either::A(result)))
               },
               Err(e) => {
-                println!("Error reading next batch: {:?}", e);
+                println!("Error reading next batch: {e:?}");
                 Ok(None)
               }
             }

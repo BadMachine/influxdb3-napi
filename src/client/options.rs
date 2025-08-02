@@ -9,14 +9,27 @@ pub enum QueryType {
   #[napi(value = "sql")]
   Sql,
   #[napi(value = "influxql")]
-  Influxql,
+  InfluxQl,
+  #[napi(value = "flight_sql")]
+  FlightSql,
+}
+
+impl QueryType {
+  pub fn str(&self) -> &'static str {
+    match self {
+      Self::Sql => "sql",
+      Self::InfluxQl => "influxql",
+      Self::FlightSql => "flightsql",
+    }
+  }
 }
 
 impl Display for QueryType {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     let str = match self {
       QueryType::Sql => "sql",
-      QueryType::Influxql => "influxql",
+      QueryType::InfluxQl => "influxql",
+      QueryType::FlightSql => "flightsql",
     };
     write!(f, "{str}")
   }

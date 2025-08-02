@@ -15,6 +15,10 @@ pub mod point;
 // #[global_allocator]
 // static ALLOC: snmalloc_rs::SnMalloc = snmalloc_rs::SnMalloc;
 
+// pub mod influx_proto {
+//   include!(concat!(env!("OUT_DIR"), "/influxdata.iox.querier.v1.rs"));
+// }
+
 
 #[cfg_attr(not(feature = "native"), napi)]
 pub type ReturnDataType = HashMap<String, Option<Value>>;

@@ -20,5 +20,4 @@ pub enum Serializer {
 
     #[napi(value = "raw")]
     Raw
-
 }

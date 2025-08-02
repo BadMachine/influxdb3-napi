@@ -4,11 +4,10 @@ pub use crate::client::options::{to_header_map, ClientOptions, WriteOptions};
 use crate::query::by_batch::QueryResultByBatch;
 use crate::serializer::Serializer;
 use crate::write::get_write_path;
-use crate::Status;
+use crate::{Status};
 use arrow_flight::{FlightClient, Ticket};
 use reqwest::header::HeaderMap;
 use reqwest::Client;
-use std::fmt::Display;
 use std::time::Duration;
 use tonic::codegen::Bytes;
 use tonic::transport::{Channel, Endpoint};
@@ -80,6 +79,7 @@ impl InfluxDBClient {
     let ticket = Ticket {
       ticket: Bytes::from(payload),
     };
+
 
     let response = self.flight_client.do_get(ticket.clone()).await.unwrap();
 

@@ -3,7 +3,7 @@ pub mod point_values;
 
 use crate::client::options::TimeUnitV2;
 use crate::point::escape::{escape, COMMA_EQ_SPACE, COMMA_SPACE};
-use crate::point::point_values::{PointFieldType, PointFieldValue, PointValues};
+use crate::point::point_values::{PointFieldType, PointValues};
 use napi::bindgen_prelude::Either5;
 use napi_derive::napi;
 use std::collections::{HashMap, HashSet};

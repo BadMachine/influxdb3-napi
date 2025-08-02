@@ -1,8 +1,6 @@
-use std::future::Future;
 use crate::serializer::Serializer;
 
 use arrow_flight::decode::FlightRecordBatchStream;
-use napi::Either;
 use napi_derive::napi;
 
 #[derive(Debug)]
