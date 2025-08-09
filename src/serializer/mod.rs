@@ -1,13 +1,12 @@
-// NAPI DOES NOT SUPPORT GENERIC STUCTURE DEPS
+use std::future::Future;
+use arrow::array::RecordBatch;
+// NAPI DOES NOT SUPPORT GENERIC STRUCTURE DEPS
 use napi_derive::napi;
-pub mod not_safe;
-//
-// use arrow::record_batch::RecordBatch;
-// use napi::bindgen_prelude::ToNapiValue;
-//
-// pub(crate) trait Serializer {
-//     async fn compute(batch: Option<arrow_flight::error::Result<RecordBatch>>) -> napi::Result<Option<impl ToNapiValue>>;
-// }
+pub mod unsafe_serializer;
+pub mod library_serializer;
+
+use arrow_flight::error::Result as FlightResult;
+use napi::bindgen_prelude::ToNapiValue;
 
 #[napi(string_enum)]
 #[derive(Debug, Clone)]
@@ -20,4 +19,10 @@ pub enum Serializer {
 
     #[napi(value = "raw")]
     Raw
+}
+
+pub trait SerializerType {
+    type Output: ToNapiValue + Send + 'static;
+
+    fn serialize(batch: FlightResult<RecordBatch>) -> impl Future<Output = Option<Vec<Self::Output>>> + Send;
 }

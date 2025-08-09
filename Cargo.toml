@@ -13,8 +13,10 @@ name = "my-binary"
 path = "src/bin/main.rs"
 
 [dependencies]
-napi = { version = "3.1.6", features = ["full", "experimental", "tokio"]}
-napi-derive = { version = "3.1.2" }
+#napi = { version = "3.2", features = ["full", "experimental", "tokio"]}
+napi-derive = { version = "3.2" }
+
+napi = { git = "https://github.com/BadMachine/napi-rs", branch = "fix/readable-stream-byte-mode-lock", package = "napi" , features = ["full", "experimental", "tokio", "web_stream", "tokio-stream"]}
 reqwest = { version = "0.12", features = ["json", "__rustls"] }
 tonic = { version = "0.12.3", features = ["gzip", "tls-native-roots", "tls-webpki-roots"] }
 #tokio-stream = "0.1.17"
@@ -22,6 +24,9 @@ arrow = { version = "55.2.0", features = ["arrow-json"]}
 arrow-flight = { version = "55.2.0", features = ["flight-sql"] }
 serde_json = "1.0.141"
 serde_arrow = { version = "0.13.4", features = ["arrow-55"] }
+tracing-subscriber = "0.3.19"
+tokio-util = "0.7.15"
+tokio = "1.47.0"
 
 #futures = "0.3.31"
 #influxdb-line-protocol = { git = "https://github.com/influxdata/influxdb3_core", subdir = "influxdb_line_protocol" }

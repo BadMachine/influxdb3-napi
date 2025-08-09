@@ -1,17 +1,25 @@
 pub mod options;
 
+use crate::client::options::QueryType;
 pub use crate::client::options::{to_header_map, ClientOptions, WriteOptions};
 use crate::query::by_batch::QueryResultByBatch;
 use crate::serializer::Serializer;
 use crate::write::get_write_path;
-use crate::{Status};
+use crate::Status;
 use arrow_flight::{FlightClient, Ticket};
 use reqwest::header::HeaderMap;
 use reqwest::Client;
 use std::time::Duration;
+use napi::bindgen_prelude::ReadableStream;
+use napi::Env;
 use tonic::codegen::Bytes;
 use tonic::transport::{Channel, Endpoint};
-use crate::client::options::QueryType;
+use tokio_util::io::{read_buf, StreamReader};
+use napi::tokio_stream::{wrappers::ReceiverStream, StreamExt};
+use tokio::sync::mpsc::error::TrySendError;
+use crate::query::query_processor::QueryProcessor;
+use crate::serializer::library_serializer::LibrarySerializer;
+use crate::serializer::unsafe_serializer::UnsafeSerializer;
 
 #[cfg_attr(not(feature = "native"), napi_derive::napi)]
 pub struct InfluxDBClient {
@@ -63,16 +71,18 @@ impl InfluxDBClient {
     }
   }
 
-  pub async fn query_batch_inner(
+  pub async fn query_inner(
     &mut self,
     database: String,
     query: String,
     _type: Option<QueryType>,
-  ) -> Result<QueryResultByBatch, napi::Error> {
-
+    env: &Env,
+  ) -> napi::Result<ReadableStream<'_, unknown>> {
     let payload = format!(
       "{{ \"database\": \"{}\", \"sql_query\": \"{}\", \"query_type\": \"{}\" }}",
-      database, query, _type.unwrap_or(QueryType::Sql)
+      database,
+      query,
+      _type.unwrap_or(QueryType::Sql)
     )
     .replace("\n", " ");
 
@@ -82,9 +92,28 @@ impl InfluxDBClient {
 
     let response = self.flight_client.do_get(ticket).await.unwrap();
 
-    let result = QueryResultByBatch::new(response, self.serializer.clone());
+    // let mut result = QueryProcessor::new(response, self.serializer.clone());
+        // QueryResultByBatch::new(response, self.serializer.clone());
 
-    Ok(result)
+    // result.process(env)
+
+    match self.serializer.clone() {
+      Serializer::Unsafe => {
+        let mut processor = QueryProcessor::<UnsafeSerializer>::new(response, Serializer::Unsafe);
+        Ok(processor.process(env).await?)
+
+      }
+      Serializer::Library => {
+        let mut processor = QueryProcessor::<LibrarySerializer>::new(response, Serializer::Library);
+        Ok(processor.process(env).await?)
+      }
+      Serializer::Raw => {
+        unimplemented!();
+        // let mut processor = QueryProcessor::<RawSerializer>::new(response, Some(Serializer::Raw));
+        // let stream = processor.process_tokio(env).await?;
+        // Ok(processor.process(env).await?)
+      }
+    }
   }
 
   #[cfg(not(feature = "native"))]
@@ -92,23 +121,25 @@ impl InfluxDBClient {
   /// # Safety
   ///
   /// This function should not be called before the horsemen are ready.
-  pub async unsafe fn query_batch(
+  pub async unsafe fn query(
     &mut self,
     database: String,
     query: String,
     _type: Option<QueryType>,
+    env: &Env,
   ) -> Result<QueryResultByBatch, napi::Error> {
-    self.query_batch_inner(database, query, _type).await
+    self.query_inner(database, query, _type, env).await
   }
 
   #[cfg(feature = "native")]
-  pub async fn query_batch(
+  pub async fn query(
     &mut self,
     database: String,
     query: String,
     _type: Option<QueryType>,
-  ) -> Result<QueryResultByBatch, napi::Error> {
-    self.query_batch_inner(database, query, _type).await
+    env: &Env,
+  ) -> napi::Result<ReadableStream<'_, unknown>> {
+    self.query_inner(database, query, _type, env).await
   }
 
   async fn write_inner(
@@ -190,7 +221,8 @@ fn get_channel(addr: String) -> Endpoint {
   Channel::from_shared(addr)
     .unwrap()
     .keep_alive_while_idle(true)
+    .http2_keep_alive_interval(Duration::from_secs(5))
+    .keep_alive_timeout(Duration::from_secs(10))
     .tls_config(tonic::transport::ClientTlsConfig::new().with_webpki_roots())
     .unwrap()
-    .keep_alive_timeout(Duration::from_secs(30))
 }

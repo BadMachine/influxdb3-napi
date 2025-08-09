@@ -56,7 +56,6 @@ const {
   },
 })
 export default __napiModule.exports
-export const AsyncIteratorWrapper = __napiModule.exports.AsyncIteratorWrapper
 export const InfluxDbClient = __napiModule.exports.InfluxDbClient
 export const InfluxDBClient = __napiModule.exports.InfluxDBClient
 export const MyAsyncIterator = __napiModule.exports.MyAsyncIterator

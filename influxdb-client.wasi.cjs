@@ -108,7 +108,6 @@ const { instance: __napiInstance, module: __wasiModule, napiModule: __napiModule
   },
 })
 module.exports = __napiModule.exports
-module.exports.AsyncIteratorWrapper = __napiModule.exports.AsyncIteratorWrapper
 module.exports.InfluxDbClient = __napiModule.exports.InfluxDbClient
 module.exports.InfluxDBClient = __napiModule.exports.InfluxDBClient
 module.exports.MyAsyncIterator = __napiModule.exports.MyAsyncIterator

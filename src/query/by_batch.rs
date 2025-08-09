@@ -1,5 +1,5 @@
-use crate::serializer::not_safe::unsafe_serialize;
-use crate::serializer::Serializer;
+use crate::serializer::unsafe_serializer::UnsafeSerializer;
+use crate::serializer::{Serializer, SerializerType};
 use crate::Value;
 
 use arrow::array::{
@@ -64,7 +64,7 @@ impl QueryResultByBatch {
 
     match self.serializer {
       Serializer::Unsafe => {
-        let serialized = unsafe_serialize(batch);
+        let serialized = UnsafeSerializer::serialize(batch);
 
         match serialized {
           Some(s) => Ok(Some(Either::B(s))),
