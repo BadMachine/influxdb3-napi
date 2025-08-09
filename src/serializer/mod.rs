@@ -7,6 +7,7 @@ pub mod library_serializer;
 
 use arrow_flight::error::Result as FlightResult;
 use napi::bindgen_prelude::ToNapiValue;
+use crate::serializer::unsafe_serializer::UnsafeSerializer;
 
 #[napi(string_enum)]
 #[derive(Debug, Clone)]
@@ -19,6 +20,16 @@ pub enum Serializer {
 
     #[napi(value = "raw")]
     Raw
+}
+
+
+
+impl TryInto<UnsafeSerializer> for Serializer {
+    fn try_into(self) -> Result<UnsafeSerializer, Self::Error> {
+        if let Serializer::Unsafe = self {
+            UnsafeSerializer {}
+        }
+    }
 }
 
 pub trait SerializerType {
