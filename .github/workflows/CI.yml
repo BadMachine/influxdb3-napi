@@ -64,7 +64,9 @@ jobs:
           - host: ubuntu-latest
             target: x86_64-unknown-linux-musl
             setup: sudo apt-get update && sudo apt-get install -y musl-tools pkg-config libssl-dev
-            build: OPENSSL_VENDORED=1 yarn build --target x86_64-unknown-linux-musl -x
+            build: yarn build --target x86_64-unknown-linux-musl -x
+            env:
+              OPENSSL_VENDORED: "1"
           - host: macos-latest
             target: aarch64-apple-darwin
             build: yarn build --target aarch64-apple-darwin
@@ -80,13 +82,19 @@ jobs:
             build: yarn build --target armv7-unknown-linux-gnueabihf --use-napi-cross
           - host: ubuntu-latest
             target: aarch64-linux-android
-            build: OPENSSL_VENDORED=1 yarn build --target aarch64-linux-android
+            build: yarn build --target aarch64-linux-android
+            env:
+              OPENSSL_VENDORED: "1"
           - host: ubuntu-latest
             target: armv7-linux-androideabi
-            build: OPENSSL_VENDORED=1 yarn build --target armv7-linux-androideabi
+            build: yarn build --target armv7-linux-androideabi
+            env:
+              OPENSSL_VENDORED: "1"
           - host: ubuntu-latest
             target: aarch64-unknown-linux-musl
-            build: OPENSSL_VENDORED=1 yarn build --target aarch64-unknown-linux-musl -x
+            build: yarn build --target aarch64-unknown-linux-musl -x
+            env:
+              OPENSSL_VENDORED: "1"
           - host: windows-latest
             target: aarch64-pc-windows-msvc
             build: yarn build --target aarch64-pc-windows-msvc
@@ -138,6 +146,7 @@ jobs:
       - name: Build
         run: ${{ matrix.settings.build }}
         shell: bash
+        env: ${{ matrix.settings.env }}
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
