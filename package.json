@@ -18,7 +18,7 @@
     "index.js"
   ],
   "napi": {
-    "binaryName": "influxdb-client",
+    "binaryName": "influxdb3-napi",
     "targets": [
       "x86_64-pc-windows-msvc",
       "x86_64-apple-darwin",

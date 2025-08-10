@@ -2120,9 +2120,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"influxdb-client@workspace:.":
+"influxdb3-napi@workspace:.":
   version: 0.0.0-use.local
-  resolution: "influxdb-client@workspace:."
+  resolution: "influxdb3-napi@workspace:."
   dependencies:
     "@emnapi/core": "npm:^1.4.5"
     "@emnapi/runtime": "npm:^1.4.5"

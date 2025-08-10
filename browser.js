@@ -1,1 +1,1 @@
-export * from 'influxdb-client-wasm32-wasi'
+export * from 'influxdb3-napi-wasm32-wasi'
