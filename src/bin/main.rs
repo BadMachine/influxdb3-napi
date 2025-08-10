@@ -2,6 +2,7 @@ use influxdb_client::client::options::QueryType;
 use napi::tokio;
 use napi::tokio::time::Instant;
 use std::time::Duration;
+use napi::Env;
 
 #[tokio::main]
 #[cfg(feature = "native")]
@@ -19,33 +20,44 @@ async fn main() {
     );
 
 
-  for _ in 0..10 {
-      let start = Instant::now();
-      let mut response = client
-          .query_batch(
-              String::from("_internal"),
-              String::from("SELECT * FROM system.databases"),
-              Some(QueryType::Sql),
-          )
-          .await
-          .unwrap();
-      //
+  // for _ in 0..10 {
+  //     let start = Instant::now();
+  //     let mut response = client
+  //         .query(
+  //             String::from("_internal"),
+  //             String::from("SELECT * FROM system.databases"),
+  //             Some(QueryType::Sql),
+  //
+  //         )
+  //         .await
+  //         .unwrap();
+  //     //
+  //
+  //     match response.next().await {
+  //         Ok(res) => match res {
+  //             Some(data) => {
+  //                 // println!("result is {:?}", data);
+  //                 println!("Time elapsed: {:?}", start.elapsed());
+  //             }
+  //             None => {
+  //                 println!("Empty response");
+  //             }
+  //         },
+  //         Err(e) => {
+  //             println!("Error occurred while the request {}", e);
+  //         }
+  //     }
+  // }
 
-      match response.next().await {
-          Ok(res) => match res {
-              Some(data) => {
-                  // println!("result is {:?}", data);
-                  println!("Time elapsed: {:?}", start.elapsed());
-              }
-              None => {
-                  println!("Empty response");
-              }
-          },
-          Err(e) => {
-              println!("Error occurred while the request {}", e);
-          }
-      }
-  }
+
+
+
+
+
+
+
+
+
 
 
     // napi::tokio::time::sleep(Duration::from_secs(10)).await;

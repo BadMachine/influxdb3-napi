@@ -2,24 +2,24 @@ pub mod options;
 
 use crate::client::options::QueryType;
 pub use crate::client::options::{to_header_map, ClientOptions, WriteOptions};
-use crate::query::by_batch::QueryResultByBatch;
-use crate::serializer::Serializer;
-use crate::write::get_write_path;
-use crate::Status;
-use arrow_flight::{FlightClient, Ticket};
-use reqwest::header::HeaderMap;
-use reqwest::Client;
-use std::time::Duration;
-use napi::bindgen_prelude::ReadableStream;
-use napi::Env;
-use tonic::codegen::Bytes;
-use tonic::transport::{Channel, Endpoint};
-use tokio_util::io::{read_buf, StreamReader};
-use napi::tokio_stream::{wrappers::ReceiverStream, StreamExt};
-use tokio::sync::mpsc::error::TrySendError;
 use crate::query::query_processor::QueryProcessor;
 use crate::serializer::library_serializer::LibrarySerializer;
+use crate::serializer::raw_serializer::RawSerializer;
 use crate::serializer::unsafe_serializer::UnsafeSerializer;
+use crate::serializer::Serializer;
+use crate::write::get_write_path;
+use crate::{Status, Value};
+use arrow_flight::{FlightClient, Ticket};
+use napi::bindgen_prelude::{Either3, ReadableStream};
+// use napi::tokio_stream::{StreamExt};
+use napi::Env;
+use reqwest::header::HeaderMap;
+use reqwest::Client;
+use std::collections::HashMap;
+use std::time::Duration;
+// use tokio_util::io::{StreamReader};
+use tonic::codegen::Bytes;
+use tonic::transport::{Channel, Endpoint};
 
 #[cfg_attr(not(feature = "native"), napi_derive::napi)]
 pub struct InfluxDBClient {
@@ -77,7 +77,14 @@ impl InfluxDBClient {
     query: String,
     _type: Option<QueryType>,
     env: &Env,
-  ) -> napi::Result<ReadableStream<'_, unknown>> {
+  ) -> napi::Result<
+    Either3<
+      ReadableStream<'_, serde_json::Value>,
+      ReadableStream<'_, HashMap<String, Option<Value>>>,
+      ReadableStream<'_, Vec<u8>>,
+    >,
+  > {
+    //ReadableStream<Vec<Either3<Value, serde_json::Value, u8>>>
     let payload = format!(
       "{{ \"database\": \"{}\", \"sql_query\": \"{}\", \"query_type\": \"{}\" }}",
       database,
@@ -92,26 +99,21 @@ impl InfluxDBClient {
 
     let response = self.flight_client.do_get(ticket).await.unwrap();
 
-    // let mut result = QueryProcessor::new(response, self.serializer.clone());
-        // QueryResultByBatch::new(response, self.serializer.clone());
-
-    // result.process(env)
-
     match self.serializer.clone() {
       Serializer::Unsafe => {
         let mut processor = QueryProcessor::<UnsafeSerializer>::new(response, Serializer::Unsafe);
-        Ok(processor.process(env).await?)
-
+        let stream = processor.process(env).await?;
+        Ok(Either3::A(stream))
       }
       Serializer::Library => {
         let mut processor = QueryProcessor::<LibrarySerializer>::new(response, Serializer::Library);
-        Ok(processor.process(env).await?)
+        let stream = processor.process(env).await?;
+        Ok(Either3::B(stream))
       }
       Serializer::Raw => {
-        unimplemented!();
-        // let mut processor = QueryProcessor::<RawSerializer>::new(response, Some(Serializer::Raw));
-        // let stream = processor.process_tokio(env).await?;
-        // Ok(processor.process(env).await?)
+        let mut processor = QueryProcessor::<RawSerializer>::new(response, Serializer::Raw);
+        let stream = processor.process(env).await?;
+        Ok(Either3::C(stream))
       }
     }
   }
@@ -127,7 +129,13 @@ impl InfluxDBClient {
     query: String,
     _type: Option<QueryType>,
     env: &Env,
-  ) -> Result<QueryResultByBatch, napi::Error> {
+  ) -> napi::Result<
+    Either3<
+      ReadableStream<'_, serde_json::Value>,
+      ReadableStream<'_, HashMap<String, Option<Value>>>,
+      ReadableStream<'_, Vec<u8>>,
+    >,
+  > {
     self.query_inner(database, query, _type, env).await
   }
 
@@ -138,7 +146,13 @@ impl InfluxDBClient {
     query: String,
     _type: Option<QueryType>,
     env: &Env,
-  ) -> napi::Result<ReadableStream<'_, unknown>> {
+  ) -> napi::Result<
+    Either3<
+      ReadableStream<'_, serde_json::Value>,
+      ReadableStream<'_, HashMap<String, Option<Value>>>,
+      ReadableStream<'_, Vec<u8>>,
+    >,
+  > {
     self.query_inner(database, query, _type, env).await
   }
 

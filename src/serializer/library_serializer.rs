@@ -1,5 +1,4 @@
-use crate::serializer::FlightResult;
-use crate::serializer::SerializerType;
+use crate::serializer::{FlightResult, SerializerTrait};
 use crate::Value;
 use arrow::array::{
   Array, ArrayData, BooleanArray, Date32Array, Date64Array, DurationMicrosecondArray,
@@ -16,7 +15,7 @@ use std::sync::Arc;
 
 pub struct LibrarySerializer;
 
-impl SerializerType for LibrarySerializer {
+impl SerializerTrait for LibrarySerializer {
   type Output = HashMap<String, Option<Value>>;
 
   async fn serialize(batch: FlightResult<RecordBatch>) -> Option<Vec<Self::Output>> {

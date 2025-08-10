@@ -1,4 +1,4 @@
-use crate::serializer::{Serializer, SerializerType};
+use crate::serializer::{Serializer, SerializerTrait};
 
 use arrow_flight::decode::FlightRecordBatchStream;
 use napi::bindgen_prelude::*;
@@ -8,13 +8,13 @@ use tokio::sync::mpsc::error::TrySendError;
 use tonic::codegen::tokio_stream::StreamExt;
 
 #[derive(Debug)]
-pub struct QueryProcessor<S: SerializerType> {
+pub struct QueryProcessor<S: SerializerTrait> {
   pub(crate) response: FlightRecordBatchStream,
   serializer: Serializer,
   _phantom: std::marker::PhantomData<S>,
 }
 
-impl<S: SerializerType> QueryProcessor<S> {
+impl<S: SerializerTrait> QueryProcessor<S> {
   pub fn new(response: FlightRecordBatchStream, serializer: Serializer) -> Self {
     Self {
       response,
