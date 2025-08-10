@@ -13,7 +13,7 @@ use napi::bindgen_prelude::{Either3, ReadableStream};
 
 use crate::serializer::raw_serializer::RawSerializer;
 use crate::serializer::unsafe_serializer::UnsafeSerializer;
-use arrow::buffer::Buffer;
+
 use napi::Env;
 use reqwest::header::HeaderMap;
 use reqwest::Client;
@@ -101,7 +101,7 @@ impl InfluxDBClient {
     ReadableStream::new(env, stream)
   }
 
-  #[napi]
+  #[cfg_attr(not(feature = "native"), napi_derive::napi)]
   pub fn query(
     &mut self,
     database: String,
