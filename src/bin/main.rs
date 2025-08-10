@@ -1,8 +1,4 @@
-use influxdb_client::client::options::QueryType;
 use napi::tokio;
-use napi::tokio::time::Instant;
-use std::time::Duration;
-use napi::Env;
 
 #[tokio::main]
 #[cfg(feature = "native")]

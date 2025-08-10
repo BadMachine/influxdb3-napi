@@ -33,7 +33,7 @@ impl Display for PointFieldValue {
       PointFieldValue::Integer(.., i_value) => write!(f, "{i_value}i"),
       PointFieldValue::Float(.., f_value) => write!(f, "{f_value}"),
       PointFieldValue::Boolean(.., b_value) => write!(f, "{b_value}"),
-      PointFieldValue::String(.., s_value) => write!(f, "{}", escape(s_value, DOUBLE_QUOTE).to_string()),
+      PointFieldValue::String(.., s_value) => write!(f, "{}", escape(s_value, DOUBLE_QUOTE)),
       PointFieldValue::UInteger(.., u_value) => write!(f, "{u_value}u"),
     }
   }
