@@ -101,18 +101,18 @@ impl InfluxDBClient {
 
     match self.serializer.clone() {
       Serializer::Unsafe => {
-        let mut processor = QueryProcessor::<UnsafeSerializer>::new(response, Serializer::Unsafe);
-        let stream = processor.process(env).await?;
+        let processor = QueryProcessor::<UnsafeSerializer>::new(response, Serializer::Unsafe);
+        let stream = processor.into_stream(env)?;
         Ok(Either3::A(stream))
       }
       Serializer::Library => {
-        let mut processor = QueryProcessor::<LibrarySerializer>::new(response, Serializer::Library);
-        let stream = processor.process(env).await?;
+        let processor = QueryProcessor::<LibrarySerializer>::new(response, Serializer::Library);
+        let stream = processor.into_stream(env)?;
         Ok(Either3::B(stream))
       }
       Serializer::Raw => {
-        let mut processor = QueryProcessor::<RawSerializer>::new(response, Serializer::Raw);
-        let stream = processor.process(env).await?;
+        let processor = QueryProcessor::<RawSerializer>::new(response, Serializer::Raw);
+        let stream = processor.into_stream(env)?;
         Ok(Either3::C(stream))
       }
     }
