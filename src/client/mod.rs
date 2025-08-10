@@ -2,22 +2,23 @@ pub mod options;
 
 use crate::client::options::QueryType;
 pub use crate::client::options::{to_header_map, ClientOptions, WriteOptions};
-use crate::query::query_processor::QueryProcessor;
+use crate::query::query_processor::into_stream;
 use crate::serializer::library_serializer::LibrarySerializer;
-use crate::serializer::raw_serializer::RawSerializer;
-use crate::serializer::unsafe_serializer::UnsafeSerializer;
 use crate::serializer::Serializer;
+use crate::serializer::SerializerTrait;
 use crate::write::get_write_path;
 use crate::{Status, Value};
 use arrow_flight::{FlightClient, Ticket};
 use napi::bindgen_prelude::{Either3, ReadableStream};
-// use napi::tokio_stream::{StreamExt};
+
+use crate::serializer::raw_serializer::RawSerializer;
+use crate::serializer::unsafe_serializer::UnsafeSerializer;
+use arrow::buffer::Buffer;
 use napi::Env;
 use reqwest::header::HeaderMap;
 use reqwest::Client;
 use std::collections::HashMap;
 use std::time::Duration;
-// use tokio_util::io::{StreamReader};
 use tonic::codegen::Bytes;
 use tonic::transport::{Channel, Endpoint};
 
@@ -65,26 +66,19 @@ impl InfluxDBClient {
     Self {
       addr,
       flight_client,
-      serializer: serializer.unwrap_or(Serializer::Unsafe),
       http_client,
+      serializer: serializer.unwrap_or(Serializer::Unsafe),
       // options: options.unwrap_or_default()
     }
   }
 
-  pub async fn query_inner(
+  pub fn query_inner<S: SerializerTrait>(
     &mut self,
     database: String,
     query: String,
     _type: Option<QueryType>,
     env: &Env,
-  ) -> napi::Result<
-    Either3<
-      ReadableStream<'_, serde_json::Value>,
-      ReadableStream<'_, HashMap<String, Option<Value>>>,
-      ReadableStream<'_, Vec<u8>>,
-    >,
-  > {
-    //ReadableStream<Vec<Either3<Value, serde_json::Value, u8>>>
+  ) -> napi::Result<ReadableStream<'_, S::Output>> {
     let payload = format!(
       "{{ \"database\": \"{}\", \"sql_query\": \"{}\", \"query_type\": \"{}\" }}",
       database,
@@ -97,63 +91,44 @@ impl InfluxDBClient {
       ticket: Bytes::from(payload),
     };
 
-    let response = self.flight_client.do_get(ticket).await.unwrap();
+    use napi::bindgen_prelude::block_on;
 
-    match self.serializer.clone() {
-      Serializer::Unsafe => {
-        let processor = QueryProcessor::<UnsafeSerializer>::new(response, Serializer::Unsafe);
-        let stream = processor.into_stream(env)?;
+    let stream = block_on(async {
+      let response = self.flight_client.do_get(ticket).await;
+      into_stream::<S>(response.unwrap())
+    });
+
+    ReadableStream::new(env, stream)
+  }
+
+  #[napi]
+  pub fn query(
+    &mut self,
+    database: String,
+    query: String,
+    _type: Option<QueryType>,
+    env: &Env,
+  ) -> napi::Result<
+    Either3<
+      ReadableStream<'_, HashMap<String, Option<Value>>>, // Library
+      ReadableStream<'_, serde_json::Map<String, serde_json::Value>>, // Unsafe
+      ReadableStream<'_, napi::bindgen_prelude::Buffer>,  // Raw
+    >,
+  > {
+    match self.serializer {
+      Serializer::Library => {
+        let stream = self.query_inner::<LibrarySerializer>(database, query, _type, env)?;
         Ok(Either3::A(stream))
       }
-      Serializer::Library => {
-        let processor = QueryProcessor::<LibrarySerializer>::new(response, Serializer::Library);
-        let stream = processor.into_stream(env)?;
+      Serializer::Unsafe => {
+        let stream = self.query_inner::<UnsafeSerializer>(database, query, _type, env)?;
         Ok(Either3::B(stream))
       }
       Serializer::Raw => {
-        let processor = QueryProcessor::<RawSerializer>::new(response, Serializer::Raw);
-        let stream = processor.into_stream(env)?;
+        let stream = self.query_inner::<RawSerializer>(database, query, _type, env)?;
         Ok(Either3::C(stream))
       }
     }
-  }
-
-  #[cfg(not(feature = "native"))]
-  #[napi_derive::napi]
-  /// # Safety
-  ///
-  /// This function should not be called before the horsemen are ready.
-  pub async unsafe fn query(
-    &mut self,
-    database: String,
-    query: String,
-    _type: Option<QueryType>,
-    env: &Env,
-  ) -> napi::Result<
-    Either3<
-      ReadableStream<'_, serde_json::Value>,
-      ReadableStream<'_, HashMap<String, Option<Value>>>,
-      ReadableStream<'_, Vec<u8>>,
-    >,
-  > {
-    self.query_inner(database, query, _type, env).await
-  }
-
-  #[cfg(feature = "native")]
-  pub async fn query(
-    &mut self,
-    database: String,
-    query: String,
-    _type: Option<QueryType>,
-    env: &Env,
-  ) -> napi::Result<
-    Either3<
-      ReadableStream<'_, serde_json::Value>,
-      ReadableStream<'_, HashMap<String, Option<Value>>>,
-      ReadableStream<'_, Vec<u8>>,
-    >,
-  > {
-    self.query_inner(database, query, _type, env).await
   }
 
   async fn write_inner(

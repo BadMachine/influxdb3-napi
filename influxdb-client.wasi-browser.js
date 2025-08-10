@@ -58,11 +58,8 @@ const {
 export default __napiModule.exports
 export const InfluxDbClient = __napiModule.exports.InfluxDbClient
 export const InfluxDBClient = __napiModule.exports.InfluxDBClient
-export const MyAsyncIterator = __napiModule.exports.MyAsyncIterator
 export const Point = __napiModule.exports.Point
 export const PointValues = __napiModule.exports.PointValues
-export const QueryResult = __napiModule.exports.QueryResult
-export const QueryResultByBatch = __napiModule.exports.QueryResultByBatch
 export const PointFieldType = __napiModule.exports.PointFieldType
 export const QueryType = __napiModule.exports.QueryType
 export const Serializer = __napiModule.exports.Serializer

@@ -1,17 +1,18 @@
 use crate::serializer::FlightResult;
 use arrow::array::RecordBatch;
 use arrow::ipc::writer::StreamWriter;
+use napi::bindgen_prelude::Buffer;
 use crate::serializer::SerializerTrait;
 
 pub struct RawSerializer;
 
 impl SerializerTrait for RawSerializer {
-    type Output = Vec<u8>;
+    type Output = Buffer;
 
     async fn serialize(batch: FlightResult<RecordBatch>) -> Option<Vec<Self::Output>> {
         if let Ok(batch) = batch {
             match serialize_record_batch_to_bytes(&batch) {
-                Ok(bytes) => Some(vec![bytes]),
+                Ok(bytes) => Some(vec![bytes.into()]),
                 Err(_) => None,
             }
         } else {
