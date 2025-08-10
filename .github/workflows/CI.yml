@@ -63,15 +63,14 @@ jobs:
             build: yarn build --target x86_64-unknown-linux-gnu --use-napi-cross
           - host: ubuntu-latest
             target: x86_64-unknown-linux-musl
-            setup: |
-              sudo apt-get update
-              sudo apt-get install -y musl-tools pkg-config libssl-dev
-            build: yarn build --target x86_64-unknown-linux-musl -x
+            setup: sudo apt-get update && sudo apt-get install -y musl-tools pkg-config libssl-dev
+            build: OPENSSL_VENDORED=1 yarn build --target x86_64-unknown-linux-musl -x
           - host: macos-latest
             target: aarch64-apple-darwin
             build: yarn build --target aarch64-apple-darwin
           - host: ubuntu-latest
             target: aarch64-unknown-linux-gnu
+            setup: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu && export CC_aarch64_unknown_linux_gnu=aarch64-linux-gnu-gcc && export AR_aarch64_unknown_linux_gnu=aarch64-linux-gnu-ar && export CFLAGS_aarch64_unknown_linux_gnu="-D__ARM_ARCH=8"
             build: yarn build --target aarch64-unknown-linux-gnu --use-napi-cross
           - host: ubuntu-latest
             target: armv7-unknown-linux-gnueabihf
@@ -81,13 +80,13 @@ jobs:
             build: yarn build --target armv7-unknown-linux-gnueabihf --use-napi-cross
           - host: ubuntu-latest
             target: aarch64-linux-android
-            build: yarn build --target aarch64-linux-android
+            build: OPENSSL_VENDORED=1 yarn build --target aarch64-linux-android
           - host: ubuntu-latest
             target: armv7-linux-androideabi
-            build: yarn build --target armv7-linux-androideabi
+            build: OPENSSL_VENDORED=1 yarn build --target armv7-linux-androideabi
           - host: ubuntu-latest
             target: aarch64-unknown-linux-musl
-            build: yarn build --target aarch64-unknown-linux-musl -x
+            build: OPENSSL_VENDORED=1 yarn build --target aarch64-unknown-linux-musl -x
           - host: windows-latest
             target: aarch64-pc-windows-msvc
             build: yarn build --target aarch64-pc-windows-msvc
