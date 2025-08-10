@@ -2,7 +2,7 @@
 [package]
 authors = ["BadMachine <iskullbreakeri@gmail.com>"]
 edition = "2021"
-name = "influxdb_client"
+name = "influxdb3_napi"
 version = "0.1.0"
 
 [lib]

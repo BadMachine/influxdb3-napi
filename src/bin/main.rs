@@ -6,12 +6,12 @@ async fn main() {
   // std::env::set_var("RUST_LOG", "hyper=trace,tonic=trace,h2=trace");
   // tracing_subscriber::fmt::init();
 
-  let mut client = influxdb_client::client::InfluxDBClient::new(
+  let mut client = influxdb3_napi::client::InfluxDBClient::new(
         // String::from("http://165.232.154.186:8195"),
         // Some(String::from("apiv3_64thndtOkGj3gpj5Mc3IwgSN9jKJ6c2Jle4-sJdQwsZ5nIThBjT9ALB0GjEpXvSgt2ZotiQzLbdtbFTEi8S2hg")),
         String::from("http://165.232.154.186:8194"),
         Some(String::from("apiv3_FYMNgiTrUYHhi0rqNTKZuJAtOYRYfN6i8_dB1MJBPQQdzNO-uyRkYPdNEbq0_anCgEQXx0Zig6cBrlVQd_siBw")),
-        Some(influxdb_client::serializer::Serializer::Library),
+        Some(influxdb3_napi::serializer::Serializer::Library),
         None
     );
 
