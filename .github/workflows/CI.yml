@@ -145,7 +145,7 @@ jobs:
         run: yarn install
       - name: Build
         run: ${{ matrix.settings.build }}
-        env: ${{ matrix.settings.env }}
+        env: ${{ matrix.settings.env || fromJSON('{}') }}
         shell: bash
       - name: Upload artifact
         uses: actions/upload-artifact@v4
