@@ -306,7 +306,7 @@ jobs:
         run: |
           yarn config set --json supportedArchitectures.cpu '["current", "arm64", "x64", "arm"]'
           yarn config set --json supportedArchitectures.libc '["current", "musl", "gnu"]'
-          rm -rf node_modules yarn.lock
+          rm -rf node_modules
           yarn install
       - name: Download artifacts
         uses: actions/download-artifact@v5
@@ -329,7 +329,7 @@ jobs:
           image: ${{ steps.docker.outputs.IMAGE }}
           options: '-v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }} --platform ${{ steps.docker.outputs.PLATFORM }}'
           run: |
-            rm -rf node_modules yarn.lock
+            rm -rf node_modules
             yarn install
             yarn test
   publish:
