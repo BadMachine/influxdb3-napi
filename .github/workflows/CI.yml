@@ -1,7 +1,7 @@
 name: CI
 env:
-  APP_NAME: influxdb3-napi
   DEBUG: napi:*
+  APP_NAME: influxdb3-napi
   MACOSX_DEPLOYMENT_TARGET: '10.13'
   CARGO_INCREMENTAL: '1'
   API_TOKEN: ${{ secrets.API_TOKEN }}
@@ -27,22 +27,28 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+
       - name: Setup node
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: yarn
+          cache: 'yarn'
+
       - name: Install
         uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy, rustfmt
+
       - name: Install dependencies
         run: yarn install
+
       - name: Oxlint
         run: yarn lint
+
       - name: Cargo fmt
         run: cargo fmt -- --check
+
       - name: Clippy
         run: cargo clippy
   build:
@@ -61,56 +67,35 @@ jobs:
             target: i686-pc-windows-msvc
           - host: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-            setup: sudo apt-get update && sudo apt-get install -y pkg-config libssl-dev
             build: yarn build --target x86_64-unknown-linux-gnu --use-napi-cross
           - host: ubuntu-latest
             target: x86_64-unknown-linux-musl
-            setup: sudo apt-get update && sudo apt-get install -y musl-tools pkg-config libssl-dev
             build: yarn build --target x86_64-unknown-linux-musl -x
-            env:
-              OPENSSL_VENDORED: "1"
           - host: macos-latest
             target: aarch64-apple-darwin
             build: yarn build --target aarch64-apple-darwin
           - host: ubuntu-latest
             target: aarch64-unknown-linux-gnu
-            setup: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu
             build: yarn build --target aarch64-unknown-linux-gnu --use-napi-cross
-            env:
-              OPENSSL_VENDORED: "1"
-              CC_aarch64_unknown_linux_gnu: "aarch64-linux-gnu-gcc"
-              AR_aarch64_unknown_linux_gnu: "aarch64-linux-gnu-ar"
-              CFLAGS_aarch64_unknown_linux_gnu: "-D__ARM_ARCH=8"
           - host: ubuntu-latest
             target: armv7-unknown-linux-gnueabihf
-            setup: |
-              sudo apt-get update
-              sudo apt-get install perl gcc-arm-linux-gnueabihf libatomic1-armhf-cross -y
             build: yarn build --target armv7-unknown-linux-gnueabihf --use-napi-cross
           - host: ubuntu-latest
             target: aarch64-linux-android
             build: yarn build --target aarch64-linux-android
-            env:
-              OPENSSL_VENDORED: "1"
-              OPENSSL_STATIC: "1"
           - host: ubuntu-latest
             target: armv7-linux-androideabi
             build: yarn build --target armv7-linux-androideabi
-            env:
-              OPENSSL_VENDORED: "1"
-              OPENSSL_STATIC: "1"
           - host: ubuntu-latest
             target: aarch64-unknown-linux-musl
             build: yarn build --target aarch64-unknown-linux-musl -x
-            env:
-              OPENSSL_VENDORED: "1"
           - host: windows-latest
             target: aarch64-pc-windows-msvc
             build: yarn build --target aarch64-pc-windows-msvc
     name: stable - ${{ matrix.settings.target }} - node@22
     runs-on: ${{ matrix.settings.host }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup node
         uses: actions/setup-node@v4
         with:
@@ -132,7 +117,7 @@ jobs:
             .cargo-cache
             target/
           key: ${{ matrix.settings.target }}-cargo-${{ matrix.settings.host }}
-      - uses: goto-bus-stop/setup-zig@v2
+      - uses: mlugg/setup-zig@v2
         if: ${{ contains(matrix.settings.target, 'musl') }}
         with:
           version: 0.14.1
@@ -151,7 +136,6 @@ jobs:
         run: yarn install
       - name: Build
         run: ${{ matrix.settings.build }}
-        env: ${{ matrix.settings.env || fromJSON('{}') }}
         shell: bash
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -160,14 +144,12 @@ jobs:
           path: |
             ${{ env.APP_NAME }}.*.node
             ${{ env.APP_NAME }}.*.wasm
-            index.js
-            index.d.ts
           if-no-files-found: error
   build-freebsd:
     runs-on: ubuntu-latest
     name: Build FreeBSD
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Build
         id: build
         uses: cross-platform-actions/action@v0.29.0
@@ -179,7 +161,7 @@ jobs:
           version: '14.2'
           memory: 8G
           cpu_count: 3
-          environment_variables: DEBUG RUSTUP_IO_THREADS
+          environment_variables: 'DEBUG RUSTUP_IO_THREADS'
           shell: bash
           run: |
             sudo pkg install -y -f curl node libnghttp2 npm cmake
@@ -207,16 +189,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: bindings-freebsd
-          path: |
-            ${{ env.APP_NAME }}.*.node
-            index.js
-            index.d.ts
+          path: ${{ env.APP_NAME }}.*.node
           if-no-files-found: error
   test-macOS-windows-binding:
     name: Test bindings on ${{ matrix.settings.target }} - node@${{ matrix.node }}
-    env:
-      API_TOKEN: ${{ secrets.API_TOKEN }}
-      SERVER_URL: ${{ vars.SERVER_URL }}
     needs:
       - build
     strategy:
@@ -240,7 +216,7 @@ jobs:
           - '22'
     runs-on: ${{ matrix.settings.host }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup node
         uses: actions/setup-node@v4
         with:
@@ -277,7 +253,7 @@ jobs:
           - '22'
     runs-on: ${{ contains(matrix.target, 'aarch64') && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup node
         uses: actions/setup-node@v4
         with:
@@ -326,7 +302,7 @@ jobs:
         uses: addnab/docker-run-action@v3
         with:
           image: ${{ steps.docker.outputs.IMAGE }}
-          options: '-v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }} --platform ${{ steps.docker.outputs.PLATFORM }}'
+          options: -v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }} --platform ${{ steps.docker.outputs.PLATFORM }}
           run: yarn test
   publish:
     name: Publish
@@ -339,8 +315,9 @@ jobs:
       - build-freebsd
       - test-macOS-windows-binding
       - test-linux-binding
+      - test-wasi
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Setup node
         uses: actions/setup-node@v4
         with:
