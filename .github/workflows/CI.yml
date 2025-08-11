@@ -356,6 +356,11 @@ jobs:
           image: ${{ steps.docker.outputs.IMAGE }}
           options: -v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }} --platform ${{ steps.docker.outputs.PLATFORM }} -e API_TOKEN=${{ secrets.API_TOKEN }} -e SERVER_URL=${{ vars.SERVER_URL }}
           run: |
+            if [[ "${{ steps.docker.outputs.IMAGE }}" == *"-slim" ]]; then
+              echo "Installing dependencies for slim image..."
+              apt-get update
+              apt-get install -y libc6-dev libgcc-s1 libstdc++6 libssl3
+            fi
             echo "=== Docker Container Debug ==="
             echo "Node version: $(node --version)"
             echo "Platform: $(node -p 'process.platform')"
