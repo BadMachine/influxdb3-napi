@@ -325,6 +325,9 @@ jobs:
         if: ${{ contains(matrix.target, 'armv7') }}
       - name: Test bindings
         uses: addnab/docker-run-action@v3
+        env:
+          API_TOKEN: ${{ secrets.API_TOKEN }}
+          SERVER_URL: ${{ vars.SERVER_URL }}
         with:
           image: ${{ steps.docker.outputs.IMAGE }}
           options: -v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }} --platform ${{ steps.docker.outputs.PLATFORM }}
