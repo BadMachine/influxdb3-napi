@@ -202,7 +202,6 @@ impl Point {
 
       default_names.retain(|name| !tag_names_set.contains(name));
 
-      default_names.sort();
       for name in &default_names {
         if !name.is_empty() {
           if let Some(val) = default_tags.get(name) {
@@ -219,8 +218,6 @@ impl Point {
         }
       }
     }
-
-    tag_names.sort();
 
     tag_names.into_iter().for_each(|name| {
       if !name.is_empty() {
@@ -250,19 +247,16 @@ impl Point {
       }
     };
 
-    Some(format!(
+    let result = format!(
       "{}{} {} {}",
       escape(self.values.measurement()?.as_str(), COMMA_SPACE),
       &tags_line,
       &fields_line,
       &time
-    ))
+    );
+    Some(result)
   }
 
-  // #[cfg_attr(not(feature = "native"), napi)]
-  // pub fn to_string(&self) -> String {
-  //   self.to_line_protocol(None, None).unwrap_or_default()
-  // }
 }
 
 #[napi]

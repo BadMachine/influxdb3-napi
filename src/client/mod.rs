@@ -1,5 +1,9 @@
 pub mod options;
+mod channel;
+mod http_client;
 
+use crate::client::http_client::get_http_client;
+use crate::client::channel::get_channel;
 use crate::client::options::QueryType;
 pub use crate::client::options::{to_header_map, WriteOptions};
 use crate::client::options::{FlightOptions, QueryPayload};
@@ -10,7 +14,7 @@ use crate::serializer::SerializerTrait;
 use crate::write::get_write_path;
 use crate::{Status, Value};
 use arrow_flight::{FlightClient, Ticket};
-use napi::bindgen_prelude::{Either3, ReadableStream};
+use napi::bindgen_prelude::{block_on, Either3, ReadableStream};
 
 use crate::serializer::raw_serializer::RawSerializer;
 use crate::serializer::unsafe_serializer::UnsafeSerializer;
@@ -71,6 +75,23 @@ impl InfluxDBClient {
     }
   }
 
+  #[cfg(feature = "native")]
+  pub async fn query_inner<S: SerializerTrait>(
+    &mut self,
+    query_payload: QueryPayload,
+  ) -> napi::tokio_stream::wrappers::ReceiverStream<napi::Result<<S as SerializerTrait>::Output>>
+  {
+    let payload: String = query_payload.into();
+
+    let ticket = Ticket {
+      ticket: Bytes::from(payload),
+    };
+
+    let response = self.flight_client.do_get(ticket).await;
+    into_stream::<S>(response.unwrap())
+  }
+
+  #[cfg(not(feature = "native"))]
   pub fn query_inner<S: SerializerTrait>(
     &mut self,
     query_payload: QueryPayload,
@@ -92,7 +113,8 @@ impl InfluxDBClient {
     ReadableStream::new(env, stream)
   }
 
-  #[cfg_attr(not(feature = "native"), napi_derive::napi)]
+  #[cfg(not(feature = "native"))]
+  #[napi_derive::napi]
   pub fn query(
     &mut self,
     query_payload: QueryPayload,
@@ -120,6 +142,33 @@ impl InfluxDBClient {
     }
   }
 
+  #[cfg(feature = "native")]
+  pub async fn query(
+    &mut self,
+    query_payload: QueryPayload,
+  ) -> napi::Result<
+    Either3<
+      napi::tokio_stream::wrappers::ReceiverStream<napi::Result<LibraryReturnType>>, // Library
+      napi::tokio_stream::wrappers::ReceiverStream<napi::Result<serde_json::Map<String, serde_json::Value>>>, // Unsafe
+      napi::tokio_stream::wrappers::ReceiverStream<napi::Result<napi::bindgen_prelude::Buffer>>,  // Raw
+    >,
+  > {
+    match self.serializer {
+      Serializer::Library => {
+        let stream = self.query_inner::<LibrarySerializer>(query_payload).await;
+        Ok(Either3::A(stream))
+      }
+      Serializer::Unsafe => {
+        let stream = self.query_inner::<UnsafeSerializer>(query_payload).await;
+        Ok(Either3::B(stream))
+      }
+      Serializer::Raw => {
+        let stream = self.query_inner::<RawSerializer>(query_payload).await;
+        Ok(Either3::C(stream))
+      }
+    }
+  }
+
   async fn write_inner(
     &mut self,
     lines: Vec<String>,
@@ -129,6 +178,7 @@ impl InfluxDBClient {
   ) -> napi::Result<()> {
     let (url, write_options) = get_write_path(&self.addr, database, org, write_options)?;
 
+    println!("SUKA {}", lines.join("\n"));
     let headers = to_header_map(&write_options.headers.unwrap_or_default()).unwrap();
     let response = &self
       .http_client
@@ -196,38 +246,4 @@ impl InfluxDBClient {
   ) -> napi::Result<()> {
     self.write_inner(lines, database, write_options, org).await
   }
-}
-
-pub fn get_http_client(token: String) -> Client {
-  let mut headers = HeaderMap::with_capacity(2);
-  headers.insert(
-    reqwest::header::AUTHORIZATION,
-    reqwest::header::HeaderValue::from_str(format!("Token {token}").as_str()).expect("REASON"),
-  );
-  headers.insert(
-    reqwest::header::CONTENT_TYPE,
-    reqwest::header::HeaderValue::from_static("text/plain; charset=utf-8"),
-  );
-  Client::builder()
-    .default_headers(headers)
-    // .min_tls_version(Version::TLS_1_3)
-    // .use_rustls_tls()
-    .build()
-    .unwrap()
-}
-
-fn get_channel(addr: String, flight_options: Option<FlightOptions>) -> Endpoint {
-  let opts = flight_options.unwrap_or_default();
-
-  let keep_alive_interval = opts.keep_alive_interval.unwrap_or_default().into();
-
-  let keep_alive_timeout = opts.keep_alive_timeout.unwrap_or_default().into();
-
-  Channel::from_shared(addr)
-    .unwrap()
-    .keep_alive_while_idle(true)
-    .http2_keep_alive_interval(Duration::from_secs(keep_alive_interval))
-    .keep_alive_timeout(Duration::from_secs(keep_alive_timeout))
-    .tls_config(tonic::transport::ClientTlsConfig::new().with_webpki_roots())
-    .unwrap()
 }

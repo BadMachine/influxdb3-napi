@@ -1,7 +1,7 @@
 use napi::bindgen_prelude::Either5;
 
 use napi_derive::napi;
-use std::collections::{ HashMap };
+use std::collections::{BTreeMap, HashMap};
 use std::fmt;
 use std::fmt::{Display, Formatter};
 use crate::point::escape::{escape, DOUBLE_QUOTE};
@@ -16,7 +16,7 @@ pub enum PointFieldType {
   Boolean,
 }
 
-// #[derive(Debug, Clone, PartialEq)]
+
 #[napi]
 #[derive(Clone)]
 pub enum PointFieldValue {
@@ -44,8 +44,8 @@ impl Display for PointFieldValue {
 pub struct PointValues {
   pub(crate) name: Option<String>,
   time: Option<u32>,
-  tags: HashMap<String, String>,
-  fields: HashMap<String, PointFieldValue>, //BTreeMap
+  tags: BTreeMap<String, String>,
+  fields: BTreeMap<String, PointFieldValue>, //BTreeMap
 }
 
 #[cfg_attr(not(feature = "native"), napi)]
@@ -65,7 +65,7 @@ impl PointValues {
     self.time = Some(time);
   }
 
-  pub fn get_fields(&self) -> &HashMap<String, PointFieldValue> {
+  pub fn get_fields(&self) -> &BTreeMap<String, PointFieldValue> {
     &self.fields
   }
 
@@ -74,8 +74,8 @@ impl PointValues {
     Self {
       name: Some(measurement),
       time: None,
-      tags: HashMap::new(),
-      fields: HashMap::new(),
+      tags: BTreeMap::new(),
+      fields: BTreeMap::new(),
     }
   }
 
@@ -84,8 +84,8 @@ impl PointValues {
     Self {
       name: Some(measurement),
       time: None,
-      tags: HashMap::new(),
-      fields: HashMap::new(),
+      tags: BTreeMap::new(),
+      fields: BTreeMap::new(),
     }
   }
 
@@ -221,28 +221,8 @@ impl PointValues {
           PointFieldValue::Integer(i) => Ok(Some(Either5::D(i))),
           PointFieldValue::String(i) => Ok(Some(Either5::E(i))),
         }
-
-        // if let Some(expected) = expected_type {
-        //   if *field_entry.get_type() != expected {
-        //     return Err(napi::Error::from_reason(format!(
-        //       "Field '{}' exists but has type {:?}, expected {:?}",
-        //       name,
-        //       field_entry.get_type(),
-        //       expected
-        //     )));
-        //   }
-        // }
-
-        // Возвращаем значение в соответствующем варианте Either5
-        // match field_entry {
-        //   FieldEntry::Boolean(_, value) => Ok(Some(Either5::A(value))),
-        //   FieldEntry::Float(_, value) => Ok(Some(Either5::B(value))),
-        //   FieldEntry::UInteger(_, value) => Ok(Some(Either5::C(value))),
-        //   FieldEntry::Integer(_, value) => Ok(Some(Either5::D(value))),
-        //   FieldEntry::String(_, value) => Ok(Some(Either5::E(value))),
-        // }
       }
-      None => Ok(None), // Поле не найдено
+      None => Ok(None),
     }
   }
 
@@ -336,14 +316,3 @@ impl PointValues {
     !self.fields.is_empty()
   }
 }
-
-// impl Default for PointValues {
-//     fn default() -> Self {
-//         Self {
-//             name: None,
-//             time: None,
-//             tags: HashMap::new(),
-//             fields: HashMap::new(),
-//         }
-//     }
-// }

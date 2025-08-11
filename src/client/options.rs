@@ -8,6 +8,7 @@ use serde::Serialize;
 use serde_json::json;
 
 #[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 #[napi_derive::napi(string_enum)]
 pub enum QueryType {
   #[napi(value = "sql")]

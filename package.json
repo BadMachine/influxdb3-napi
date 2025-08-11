@@ -32,8 +32,7 @@
       "x86_64-unknown-freebsd",
       "aarch64-unknown-linux-musl",
       "aarch64-pc-windows-msvc",
-      "armv7-linux-androideabi",
-      "wasm32-wasip1-threads"
+      "armv7-linux-androideabi"
     ]
   },
   "engines": {
@@ -50,7 +49,6 @@
     "bench": "node --import @oxc-node/core/register benchmark/bench.ts",
     "build": "napi build --platform --release --no-const-enum",
     "build:wasm-unknown": "napi build --platform --release -t wasm32-unknown-unknown",
-    "build:wasip1-threads": "napi build --platform --release -t wasm32-wasip1-threads",
     "build:wasip2": "napi build --platform --release -t wasm32-wasip2",
     "build:debug": "napi build --platform",
     "format": "run-p format:prettier format:rs format:toml",
@@ -78,7 +76,8 @@
     "oxlint": "^1.8.0",
     "prettier": "^3.6.2",
     "tinybench": "^4.0.1",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "dotenv": "^17.2.1"
   },
   "lint-staged": {
     "*.@(js|ts|tsx)": [
@@ -92,6 +91,9 @@
     ]
   },
   "ava": {
+    "require": [
+      "dotenv/config"
+    ],
     "extensions": {
       "ts": "module"
     },
