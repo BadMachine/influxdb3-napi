@@ -356,6 +356,9 @@ jobs:
           image: ${{ steps.docker.outputs.IMAGE }}
           options: -v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }} --platform ${{ steps.docker.outputs.PLATFORM }} -e API_TOKEN=${{ secrets.API_TOKEN }} -e SERVER_URL=${{ vars.SERVER_URL }}
           run: |
+            if [[ "${{ matrix.target }}" == "x86_64-unknown-linux-gnu" ]]; then
+              export NAPI_RS_NATIVE_LIBRARY_PATH="./influxdb3-napi.linux-x64-gnu.node"
+            fi
             yarn test
   publish:
     name: Publish
