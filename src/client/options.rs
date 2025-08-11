@@ -153,13 +153,6 @@ pub fn to_header_map(
   Ok(headers)
 }
 
-// #[derive(Default)]
-// #[cfg_attr(not(feature = "native"), napi_derive::napi(object))]
-// pub struct ClientOptions {
-//   pub write_options: Option<WriteOptions>,
-//   pub flight_options: Option<FlightOptions>,
-// }
-
 #[cfg_attr(not(feature = "native"), napi_derive::napi(object))]
 #[derive(Clone)]
 pub struct FlightOptions {
@@ -184,19 +177,19 @@ pub struct QueryPayload {
   pub params: Option<HashMap<String, String>>,
 }
 
-impl Into<String> for QueryPayload {
-  fn into(self) -> String {
-    let json = match self.params {
+impl From<QueryPayload> for String {
+  fn from(val: QueryPayload) -> Self {
+    let json = match val.params {
       Some(params) => json!({
-          "database": self.database,
-          "sql_query": self.query,
-          "query_type": self._type.unwrap_or(QueryType::Sql),
+          "database": val.database,
+          "sql_query": val.query,
+          "query_type": val._type.unwrap_or(QueryType::Sql),
           "params": params
       }),
       None => json!({
-          "database": self.database,
-          "sql_query": self.query,
-          "query_type": self._type.unwrap_or(QueryType::Sql),
+          "database": val.database,
+          "sql_query": val.query,
+          "query_type": val._type.unwrap_or(QueryType::Sql),
       }),
     };
 

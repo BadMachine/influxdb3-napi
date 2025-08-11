@@ -193,7 +193,7 @@ impl Point {
 
     let mut tags_line = String::new();
 
-    let mut tag_names = self.values.tag_names();
+    let tag_names = self.values.tag_names();
 
     if let Some(default_tags) = default_tags {
       let tag_names_set: HashSet<String> = tag_names.clone().into_iter().collect();

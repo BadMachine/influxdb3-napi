@@ -4,7 +4,6 @@ pub mod options;
 
 use crate::client::channel::get_channel;
 use crate::client::http_client::get_http_client;
-use crate::client::options::QueryType;
 pub use crate::client::options::{to_header_map, WriteOptions};
 use crate::client::options::{FlightOptions, QueryPayload};
 use crate::query::query_processor::into_stream;
@@ -12,7 +11,7 @@ use crate::serializer::library_serializer::{LibraryReturnType, LibrarySerializer
 use crate::serializer::Serializer;
 use crate::serializer::SerializerTrait;
 use crate::write::get_write_path;
-use crate::{Status, Value};
+use crate::Status;
 use arrow_flight::{FlightClient, Ticket};
 use napi::bindgen_prelude::{block_on, Either3, ReadableStream};
 
@@ -20,12 +19,8 @@ use crate::serializer::raw_serializer::RawSerializer;
 use crate::serializer::unsafe_serializer::UnsafeSerializer;
 
 use napi::Env;
-use reqwest::header::HeaderMap;
 use reqwest::Client;
-use std::collections::HashMap;
-use std::time::Duration;
 use tonic::codegen::Bytes;
-use tonic::transport::{Channel, Endpoint};
 
 #[cfg_attr(not(feature = "native"), napi_derive::napi)]
 pub struct InfluxDBClient {
@@ -191,9 +186,7 @@ impl InfluxDBClient {
 
     if let Err(e) = response {
       match e.status() {
-        Some(reqwest::StatusCode::UNAUTHORIZED) => {
-          Err(napi::Error::from_reason("Unauthorized").into())
-        }
+        Some(reqwest::StatusCode::UNAUTHORIZED) => Err(napi::Error::from_reason("Unauthorized")),
         _ => Err(napi::Error::from_status(Status::Cancelled)),
       }
     } else {
@@ -201,8 +194,8 @@ impl InfluxDBClient {
         Ok(response) => match response.status() {
           reqwest::StatusCode::OK => Ok(()),
           reqwest::StatusCode::NO_CONTENT => Ok(()),
-          reqwest::StatusCode::UNAUTHORIZED => Err(napi::Error::from_reason("Unauthorized").into()),
-          _ => Err(napi::Error::from_reason("Unknown").into()),
+          reqwest::StatusCode::UNAUTHORIZED => Err(napi::Error::from_reason("Unauthorized")),
+          _ => Err(napi::Error::from_reason("Unknown")),
         },
         Err(error) => Err(napi::Error::from_status(Status::Cancelled)),
       }

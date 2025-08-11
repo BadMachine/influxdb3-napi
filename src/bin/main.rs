@@ -6,7 +6,7 @@ async fn main() {
   // std::env::set_var("RUST_LOG", "hyper=trace,tonic=trace,h2=trace");
   // tracing_subscriber::fmt::init();
 
-  let mut client = influxdb3_napi::client::InfluxDBClient::new(
+  let client = influxdb3_napi::client::InfluxDBClient::new(
         // String::from("http://165.232.154.186:8195"),
         // Some(String::from("apiv3_64thndtOkGj3gpj5Mc3IwgSN9jKJ6c2Jle4-sJdQwsZ5nIThBjT9ALB0GjEpXvSgt2ZotiQzLbdtbFTEi8S2hg")),
         String::from("http://165.232.154.186:8194"),
