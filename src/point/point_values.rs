@@ -26,6 +26,8 @@ pub enum PointFieldValue {
   Boolean(bool),
 }
 
+type Field<'a> = Either5<&'a bool, &'a f64, &'a u32, &'a i64, &'a String>;
+
 impl Display for PointFieldValue {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     match self {
@@ -208,7 +210,7 @@ impl PointValues {
     &self,
     name: String,
     expected_type: Option<PointFieldType>,
-  ) -> napi::Result<Option<Either5<&bool, &f64, &u32, &i64, &String>>> {
+  ) -> napi::Result<Option<Field<'_>>> {
     let field_entry = self.fields.get(&name);
 
     match field_entry {

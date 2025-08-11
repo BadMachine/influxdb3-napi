@@ -8,19 +8,25 @@ pub use crate::client::options::{to_header_map, WriteOptions};
 use crate::client::options::{FlightOptions, QueryPayload};
 use crate::query::query_processor::into_stream;
 use crate::serializer::library_serializer::{LibraryReturnType, LibrarySerializer};
+use crate::serializer::raw_serializer::RawSerializer;
+use crate::serializer::unsafe_serializer::UnsafeSerializer;
 use crate::serializer::Serializer;
 use crate::serializer::SerializerTrait;
 use crate::write::get_write_path;
 use crate::Status;
 use arrow_flight::{FlightClient, Ticket};
-use napi::Env;
-use crate::serializer::raw_serializer::RawSerializer;
-use crate::serializer::unsafe_serializer::UnsafeSerializer;
 use napi::bindgen_prelude::*;
+use napi::Env;
 use napi_derive::napi;
 
 use reqwest::Client;
 use tonic::codegen::Bytes;
+
+type LibraryStream<'a> = ReadableStream<'a, LibraryReturnType>;
+type UnsafeStream<'a> = ReadableStream<'a, serde_json::Map<String, serde_json::Value>>;
+type RawStream<'a> = ReadableStream<'a, napi::bindgen_prelude::Buffer>;
+
+type EitherStream<'a> = Either3<LibraryStream<'a>, UnsafeStream<'a>, RawStream<'a>>;
 
 #[cfg_attr(not(feature = "native"), napi_derive::napi)]
 pub struct InfluxDBClient {
@@ -114,13 +120,7 @@ impl InfluxDBClient {
     &mut self,
     query_payload: QueryPayload,
     env: &Env,
-  ) -> napi::Result<
-    Either3<
-      ReadableStream<'_, LibraryReturnType>, // Library
-      ReadableStream<'_, serde_json::Map<String, serde_json::Value>>, // Unsafe
-      ReadableStream<'_, napi::bindgen_prelude::Buffer>, // Raw
-    >,
-  > {
+  ) -> napi::Result<EitherStream<'_>> {
     match self.serializer {
       Serializer::Library => {
         let stream = self.query_inner::<LibrarySerializer>(query_payload, env)?;
@@ -197,7 +197,7 @@ impl InfluxDBClient {
           reqwest::StatusCode::UNAUTHORIZED => Err(napi::Error::from_reason("Unauthorized")),
           _ => Err(napi::Error::from_reason("Unknown")),
         },
-        Err(error) => Err(napi::Error::from_status(Status::Cancelled)),
+        Err(_error) => Err(napi::Error::from_status(Status::Cancelled)),
       }
     }
   }

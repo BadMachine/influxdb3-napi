@@ -4,8 +4,8 @@
 
 use napi::bindgen_prelude::*;
 use napi::sys::{napi_env, napi_value};
-use std::collections::HashMap;
 use napi_derive::napi;
+use std::collections::HashMap;
 
 pub mod client;
 pub mod point;
