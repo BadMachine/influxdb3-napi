@@ -214,6 +214,9 @@ jobs:
           if-no-files-found: error
   test-macOS-windows-binding:
     name: Test bindings on ${{ matrix.settings.target }} - node@${{ matrix.node }}
+    env:
+      API_TOKEN: ${{ secrets.API_TOKEN }}
+      SERVER_URL: ${{ vars.SERVER_URL }}
     needs:
       - build
     strategy:
