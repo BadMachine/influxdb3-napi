@@ -23,7 +23,7 @@ concurrency:
 jobs:
   lint:
     name: Lint
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
       - name: Setup node
@@ -160,7 +160,7 @@ jobs:
             ${{ env.APP_NAME }}.*.wasm
           if-no-files-found: error
   build-freebsd:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     name: Build FreeBSD
     steps:
       - uses: actions/checkout@v4
@@ -320,7 +320,7 @@ jobs:
           run: yarn test
   publish:
     name: Publish
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     permissions:
       contents: write
       id-token: write
