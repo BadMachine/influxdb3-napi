@@ -327,12 +327,9 @@ jobs:
         uses: addnab/docker-run-action@v3
         with:
           image: ${{ steps.docker.outputs.IMAGE }}
-          options: -v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }} --platform ${{ steps.docker.outputs.PLATFORM }}
+          options: -v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }} --platform ${{ steps.docker.outputs.PLATFORM }} -e API_TOKEN="${{ secrets.API_TOKEN }}" -e SERVER_URL="${{ vars.SERVER_URL }}"
           run: |
             yarn test
-        env:
-          API_TOKEN: ${{ secrets.API_TOKEN }}
-          SERVER_URL: ${{ vars.SERVER_URL }}
   publish:
     name: Publish
     runs-on: ubuntu-latest
