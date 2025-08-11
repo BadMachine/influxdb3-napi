@@ -324,41 +324,40 @@ jobs:
       - run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
         if: ${{ contains(matrix.target, 'armv7') }}
 
-      - name: Debug binding resolution
-        run: |
-          echo "=== Available .node files ==="
-          find . -name "*.node" -type f
-          echo ""
-          echo "=== Target info ==="
-          echo "Matrix target: ${{ matrix.target }}"
-          echo "Node version: $(node --version)"
-          echo "Platform: $(node -p 'process.platform')"
-          echo "Arch: $(node -p 'process.arch')"
-          echo ""
-          echo "=== Check index.js logic ==="
-          head -20 index.js
-          echo ""
-          echo "=== Test require ==="
-          node -e "
-            console.log('Process info:', process.platform, process.arch);
-            try {
-              const binding = require('./index.js');
-              console.log('SUCCESS: Binding loaded');
-            } catch (e) {
-              console.log('ERROR:', e.message);
-              console.log('Available files:');
-              require('fs').readdirSync('.').filter(f => f.endsWith('.node')).forEach(f => console.log('  ', f));
-            }
-          "
+      - name: Debug loading errors
+        uses: addnab/docker-run-action@v3
+        with:
+          image: ${{ steps.docker.outputs.IMAGE }}
+          options: -v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }} --platform ${{ steps.docker.outputs.PLATFORM }}
+          run: |
+            export API_TOKEN="${{ secrets.API_TOKEN }}"
+            export SERVER_URL="${{ vars.SERVER_URL }}"
+            
+            echo "=== Debug with manual error extraction ==="
+            node -e "
+              try {
+                const binding = require('./index.js');
+                console.log('SUCCESS');
+              } catch (e) {
+                console.log('Main error:', e.message);
+                console.log('Error cause:', e.cause);
+            
+                if (e.cause && Array.isArray(e.cause)) {
+                  console.log('=== Load Errors ===');
+                  e.cause.forEach((err, i) => {
+                    console.log(\`Error \${i + 1}:\`, err.message);
+                    console.log(\`  Code:\`, err.code);
+                    console.log(\`  Stack:\`, err.stack.split('\\n')[0]);
+                  });
+                }
+              }
+            "
       - name: Test bindings
         uses: addnab/docker-run-action@v3
         with:
           image: ${{ steps.docker.outputs.IMAGE }}
           options: -v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }} --platform ${{ steps.docker.outputs.PLATFORM }} -e API_TOKEN=${{ secrets.API_TOKEN }} -e SERVER_URL=${{ vars.SERVER_URL }}
           run: |
-            if [[ "${{ matrix.target }}" == "x86_64-unknown-linux-gnu" ]]; then
-              export NAPI_RS_NATIVE_LIBRARY_PATH="./influxdb3-napi.linux-x64-gnu.node"
-            fi
             yarn test
   publish:
     name: Publish
