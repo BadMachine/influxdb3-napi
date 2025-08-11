@@ -300,6 +300,19 @@ jobs:
         with:
           name: bindings-${{ matrix.target }}
           path: .
+      - name: Debug artifacts
+        run: |
+          echo "=== Current directory ==="
+          pwd
+          echo "=== List all .node files ==="
+          find . -name "*.node" -exec ls -la {} \;
+          echo "=== Check file architecture ==="
+          find . -name "*.node" -exec file {} \;
+          echo "=== Node.js version ==="
+          node --version
+          echo "=== Platform info ==="
+          uname -a
+
       - name: List packages
         run: ls -R .
         shell: bash
