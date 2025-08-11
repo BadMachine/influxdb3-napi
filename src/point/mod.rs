@@ -165,11 +165,12 @@ impl Point {
   ) -> Option<String> {
     self.values.measurement()?;
 
-    // if self.values.measurement().is_none() {
-    //   return None;
-    // };
+    if self.values.measurement().is_none() {
+      return None;
+    };
 
     let mut fields_line = String::new();
+
     //  Sort method omitted here, bc of BTreeMap
     for (field_name, field_entry) in self.values.get_fields() {
       if !fields_line.is_empty() {

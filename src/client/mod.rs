@@ -143,11 +143,11 @@ impl InfluxDBClient {
     query_payload: QueryPayload,
   ) -> napi::Result<
     Either3<
-      napi::tokio_stream::wrappers::ReceiverStream<napi::Result<LibraryReturnType>>, // Library
+      napi::tokio_stream::wrappers::ReceiverStream<napi::Result<LibraryReturnType>>,
       napi::tokio_stream::wrappers::ReceiverStream<
         napi::Result<serde_json::Map<String, serde_json::Value>>,
-      >, // Unsafe
-      napi::tokio_stream::wrappers::ReceiverStream<napi::Result<napi::bindgen_prelude::Buffer>>, // Raw
+      >,
+      napi::tokio_stream::wrappers::ReceiverStream<napi::Result<napi::bindgen_prelude::Buffer>>,
     >,
   > {
     match self.serializer {
