@@ -356,6 +356,33 @@ jobs:
           image: ${{ steps.docker.outputs.IMAGE }}
           options: -v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }} --platform ${{ steps.docker.outputs.PLATFORM }} -e API_TOKEN=${{ secrets.API_TOKEN }} -e SERVER_URL=${{ vars.SERVER_URL }}
           run: |
+            echo "=== Docker Container Debug ==="
+            echo "Node version: $(node --version)"
+            echo "Platform: $(node -p 'process.platform')"
+            echo "Arch: $(node -p 'process.arch')"
+            echo "Available .node files:"
+            find . -maxdepth 1 -name "*.node" -exec ls -la {} \;
+            
+            echo "=== Test direct require ==="
+            node -e "
+            console.log('Process info:', process.platform, process.arch);
+            try {
+              const binding = require('./index.js');
+              console.log('SUCCESS: Binding loaded');
+            } catch (e) {
+              console.log('ERROR:', e.message);
+              console.log('Stack:', e.stack.split('\n').slice(0,5).join('\n'));
+            }
+            "
+            
+            echo "=== Check file permissions and dependencies ==="
+            ls -la ./influxdb3-napi.linux-x64-gnu.node
+            file ./influxdb3-napi.linux-x64-gnu.node
+            ldd ./influxdb3-napi.linux-x64-gnu.node || echo "ldd failed"
+            
+            # Если require не работает, запускаем тесты с переменными
+            export API_TOKEN=${{ secrets.API_TOKEN }}
+            export SERVER_URL=${{ vars.SERVER_URL }}
             yarn test
   publish:
     name: Publish
