@@ -4,6 +4,10 @@ use std::collections::HashMap;
 use std::fmt;
 use std::fmt::Display;
 
+use serde::Serialize;
+use serde_json::json;
+
+#[derive(Serialize)]
 #[napi_derive::napi(string_enum)]
 pub enum QueryType {
   #[napi(value = "sql")]
@@ -106,7 +110,7 @@ pub struct WriteOptions {
   //headers?: {[key: string]: string}
   pub headers: Option<HashMap<String, String>>,
   /** When specified, write bodies larger than the threshold are gzipped  */
-  pub gzip_threshold: u32,
+  pub gzip: bool,
   /**
    * Instructs the server whether to wait with the response until WAL persistence completes.
    * noSync=true means faster write but without the confirmation that the data was persisted.
@@ -127,17 +131,11 @@ impl Default for WriteOptions {
     Self {
       precision: Some(Precision::V3(TimeUnitV3::Nanosecond)),
       headers: None,
-      gzip_threshold: 1000,
-      no_sync: Some(false),
+      gzip: true,
+      no_sync: Some(true),
       default_tags: None,
     }
   }
-}
-
-#[derive(Default)]
-#[cfg_attr(not(feature = "native"), napi_derive::napi(object))]
-pub struct ClientOptions {
-  pub write_options: WriteOptions,
 }
 
 pub fn to_header_map(
@@ -152,4 +150,57 @@ pub fn to_header_map(
   }
 
   Ok(headers)
+}
+
+// #[derive(Default)]
+// #[cfg_attr(not(feature = "native"), napi_derive::napi(object))]
+// pub struct ClientOptions {
+//   pub write_options: Option<WriteOptions>,
+//   pub flight_options: Option<FlightOptions>,
+// }
+
+#[cfg_attr(not(feature = "native"), napi_derive::napi(object))]
+#[derive(Clone)]
+pub struct FlightOptions {
+  pub keep_alive_interval: Option<u32>,
+  pub keep_alive_timeout: Option<u32>,
+}
+
+impl Default for FlightOptions {
+  fn default() -> Self {
+    Self {
+      keep_alive_interval: Some(5),
+      keep_alive_timeout: Some(20),
+    }
+  }
+}
+
+
+#[cfg_attr(not(feature = "native"), napi_derive::napi(object))]
+pub struct QueryPayload {
+  pub database: String,
+  pub query: String,
+  pub _type: Option<QueryType>,
+  pub params: Option<HashMap<String, String>>,
+}
+
+impl Into<String> for QueryPayload {
+  fn into(self) -> String {
+    
+    let json = match self.params { 
+      Some(params) => json!({
+          "database": self.database,
+          "sql_query": self.query,
+          "query_type": self._type.unwrap_or(QueryType::Sql),
+          "params": params
+      }),
+      None => json!({
+          "database": self.database,
+          "sql_query": self.query,
+          "query_type": self._type.unwrap_or(QueryType::Sql),
+      }),
+    };
+
+    json.to_string()
+  }
 }

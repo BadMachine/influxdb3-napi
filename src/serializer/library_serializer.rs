@@ -12,11 +12,15 @@ use arrow::array::{
 use arrow::datatypes::{DataType, TimeUnit};
 use std::collections::HashMap;
 use std::sync::Arc;
+use napi_derive::napi;
 
 pub struct LibrarySerializer;
 
+#[napi]
+pub type LibraryReturnType = HashMap<String, Option<Value>>;
+
 impl SerializerTrait for LibrarySerializer {
-  type Output = HashMap<String, Option<Value>>;
+  type Output = LibraryReturnType;
 
   async fn serialize(batch: FlightResult<RecordBatch>) -> Option<Vec<Self::Output>> {
     if let Ok(batch) = batch {
@@ -24,7 +28,7 @@ impl SerializerTrait for LibrarySerializer {
       let row_count = batch.num_rows();
       let field_count = schema.fields().len();
 
-      let mut rows: Vec<HashMap<String, Option<Value>>> = (0..row_count)
+      let mut rows: Vec<Self::Output> = (0..row_count)
         .map(|_| HashMap::with_capacity(field_count))
         .collect();
 

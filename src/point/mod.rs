@@ -246,7 +246,7 @@ impl Point {
           TimeUnitV2::Nanosecond => now.as_nanos().to_string(),
         }
       } else {
-        now.as_millis().to_string()
+        now.as_nanos().to_string()
       }
     };
 

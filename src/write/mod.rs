@@ -15,20 +15,20 @@ pub fn get_write_path(url: &str, database: String, org: Option<String>, _write_o
                 Precision::V3(v3_precision) => {
                     if write_options.no_sync.is_some() { v3_precision.to_string() } else {
                         match v3_precision {
-                            TimeUnitV3::Second => { TimeUnitV2::Second.to_string() },
-                            TimeUnitV3::Millisecond => { TimeUnitV2::Millisecond.to_string() },
-                            TimeUnitV3::Microsecond => { TimeUnitV2::Microsecond.to_string() },
-                            TimeUnitV3::Nanosecond => { TimeUnitV2::Nanosecond.to_string() },
+                            TimeUnitV3::Second => { TimeUnitV3::Second.to_string() },
+                            TimeUnitV3::Millisecond => { TimeUnitV3::Millisecond.to_string() },
+                            TimeUnitV3::Microsecond => { TimeUnitV3::Microsecond.to_string() },
+                            TimeUnitV3::Nanosecond => { TimeUnitV3::Nanosecond.to_string() },
                         }
                     }
                 }
                 Precision::V2(v2_precision) => {
                     if write_options.no_sync.is_none() { v2_precision.to_string() } else {
                         match v2_precision {
-                            TimeUnitV2::Second => TimeUnitV3::Second.to_string(),
-                            TimeUnitV2::Millisecond => TimeUnitV3::Millisecond.to_string(),
-                            TimeUnitV2::Microsecond => TimeUnitV3::Microsecond.to_string(),
-                            TimeUnitV2::Nanosecond => TimeUnitV3::Nanosecond.to_string()
+                            TimeUnitV2::Second => TimeUnitV2::Second.to_string(),
+                            TimeUnitV2::Millisecond => TimeUnitV2::Millisecond.to_string(),
+                            TimeUnitV2::Microsecond => TimeUnitV2::Microsecond.to_string(),
+                            TimeUnitV2::Nanosecond => TimeUnitV2::Nanosecond.to_string()
                         }
                     }
                 }
@@ -37,7 +37,15 @@ pub fn get_write_path(url: &str, database: String, org: Option<String>, _write_o
         _ => TimeUnitV3::Nanosecond.to_string()
     };
 
-    query_params.push((String::from("db"), database));
+    match write_options.no_sync {
+        Some(true) => {
+            query_params.push((String::from("db"), database));
+        },
+        _ => {
+            query_params.push((String::from("bucket"), database));
+        }
+    }
+
     query_params.push((String::from(PRECISION_QUERY_NAME), precision));
 
     if let Some(org) = org { query_params.push((String::from("org"), org)) }
