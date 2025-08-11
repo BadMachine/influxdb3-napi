@@ -55,7 +55,6 @@ test('Test write lp to cloud serverless', async (t) => {
     t.pass()
   } catch (e) {
     console.error(e);
-    console.log('qweqwe ', e)
     t.fail()
   }
 })
