@@ -330,6 +330,7 @@ jobs:
           options: -v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }} --platform ${{ steps.docker.outputs.PLATFORM }}
           run: |
             apt-get update && apt-get install -y libc6-dev libssl-dev || true
+            chmod +x ./influxdb3-napi.linux-x64-gnu.node
             yarn test
   publish:
     name: Publish
