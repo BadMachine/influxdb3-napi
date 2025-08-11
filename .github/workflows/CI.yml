@@ -4,6 +4,8 @@ env:
   DEBUG: napi:*
   MACOSX_DEPLOYMENT_TARGET: '10.13'
   CARGO_INCREMENTAL: '1'
+  API_TOKEN: ${{ secrets.API_TOKEN }}
+  SERVER_URL: ${{ vars.SERVER_URL }}
 'on':
   push:
     branches:
@@ -371,5 +373,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          API_TOKEN: ${{ secrets.API_TOKEN }}
-          SERVER_URL: ${{ vars.SERVER_URL }}
