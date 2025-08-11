@@ -1,10 +1,10 @@
 use napi::bindgen_prelude::Either5;
 
+use crate::point::escape::{escape, DOUBLE_QUOTE};
 use napi_derive::napi;
 use std::collections::{BTreeMap, HashMap};
 use std::fmt;
 use std::fmt::{Display, Formatter};
-use crate::point::escape::{escape, DOUBLE_QUOTE};
 
 #[napi(string_enum = "lowercase")]
 #[derive(Debug, Clone, PartialEq)]
@@ -15,7 +15,6 @@ pub enum PointFieldType {
   String,
   Boolean,
 }
-
 
 #[napi]
 #[derive(Clone)]
@@ -213,15 +212,13 @@ impl PointValues {
     let field_entry = self.fields.get(&name);
 
     match field_entry {
-      Some(field_entry) => {
-        match field_entry {
-          PointFieldValue::Boolean(b) => Ok(Some(Either5::A(b))),
-          PointFieldValue::Float(f) => Ok(Some(Either5::B(f))),
-          PointFieldValue::UInteger(u) => Ok(Some(Either5::C(u))),
-          PointFieldValue::Integer(i) => Ok(Some(Either5::D(i))),
-          PointFieldValue::String(i) => Ok(Some(Either5::E(i))),
-        }
-      }
+      Some(field_entry) => match field_entry {
+        PointFieldValue::Boolean(b) => Ok(Some(Either5::A(b))),
+        PointFieldValue::Float(f) => Ok(Some(Either5::B(f))),
+        PointFieldValue::UInteger(u) => Ok(Some(Either5::C(u))),
+        PointFieldValue::Integer(i) => Ok(Some(Either5::D(i))),
+        PointFieldValue::String(i) => Ok(Some(Either5::E(i))),
+      },
       None => Ok(None),
     }
   }

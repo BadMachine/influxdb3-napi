@@ -176,7 +176,6 @@ impl Default for FlightOptions {
   }
 }
 
-
 #[cfg_attr(not(feature = "native"), napi_derive::napi(object))]
 pub struct QueryPayload {
   pub database: String,
@@ -187,8 +186,7 @@ pub struct QueryPayload {
 
 impl Into<String> for QueryPayload {
   fn into(self) -> String {
-    
-    let json = match self.params { 
+    let json = match self.params {
       Some(params) => json!({
           "database": self.database,
           "sql_query": self.query,

@@ -256,7 +256,6 @@ impl Point {
     );
     Some(result)
   }
-
 }
 
 #[napi]

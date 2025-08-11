@@ -1,14 +1,14 @@
-pub mod options;
 mod channel;
 mod http_client;
+pub mod options;
 
-use crate::client::http_client::get_http_client;
 use crate::client::channel::get_channel;
+use crate::client::http_client::get_http_client;
 use crate::client::options::QueryType;
 pub use crate::client::options::{to_header_map, WriteOptions};
 use crate::client::options::{FlightOptions, QueryPayload};
 use crate::query::query_processor::into_stream;
-use crate::serializer::library_serializer::{LibrarySerializer, LibraryReturnType};
+use crate::serializer::library_serializer::{LibraryReturnType, LibrarySerializer};
 use crate::serializer::Serializer;
 use crate::serializer::SerializerTrait;
 use crate::write::get_write_path;
@@ -123,7 +123,7 @@ impl InfluxDBClient {
     Either3<
       ReadableStream<'_, LibraryReturnType>, // Library
       ReadableStream<'_, serde_json::Map<String, serde_json::Value>>, // Unsafe
-      ReadableStream<'_, napi::bindgen_prelude::Buffer>,  // Raw
+      ReadableStream<'_, napi::bindgen_prelude::Buffer>, // Raw
     >,
   > {
     match self.serializer {
@@ -149,8 +149,10 @@ impl InfluxDBClient {
   ) -> napi::Result<
     Either3<
       napi::tokio_stream::wrappers::ReceiverStream<napi::Result<LibraryReturnType>>, // Library
-      napi::tokio_stream::wrappers::ReceiverStream<napi::Result<serde_json::Map<String, serde_json::Value>>>, // Unsafe
-      napi::tokio_stream::wrappers::ReceiverStream<napi::Result<napi::bindgen_prelude::Buffer>>,  // Raw
+      napi::tokio_stream::wrappers::ReceiverStream<
+        napi::Result<serde_json::Map<String, serde_json::Value>>,
+      >, // Unsafe
+      napi::tokio_stream::wrappers::ReceiverStream<napi::Result<napi::bindgen_prelude::Buffer>>, // Raw
     >,
   > {
     match self.serializer {
@@ -178,7 +180,6 @@ impl InfluxDBClient {
   ) -> napi::Result<()> {
     let (url, write_options) = get_write_path(&self.addr, database, org, write_options)?;
 
-    println!("SUKA {}", lines.join("\n"));
     let headers = to_header_map(&write_options.headers.unwrap_or_default()).unwrap();
     let response = &self
       .http_client
@@ -197,24 +198,13 @@ impl InfluxDBClient {
       }
     } else {
       match response {
-        Ok(response) => {
-          match response.status() {
-            reqwest::StatusCode::OK => {
-              Ok(())
-            },
-            reqwest::StatusCode::NO_CONTENT => {
-              Ok(())
-            },
-            reqwest::StatusCode::UNAUTHORIZED => {
-              Err(napi::Error::from_reason("Unauthorized").into())
-            },
-            _ => {
-              Err(napi::Error::from_reason("Unknown").into())
-            }
-          }
-        }
+        Ok(response) => match response.status() {
+          reqwest::StatusCode::OK => Ok(()),
+          reqwest::StatusCode::NO_CONTENT => Ok(()),
+          reqwest::StatusCode::UNAUTHORIZED => Err(napi::Error::from_reason("Unauthorized").into()),
+          _ => Err(napi::Error::from_reason("Unknown").into()),
+        },
         Err(error) => {
-          println!("Error occurred: {error:?}");
           Err(napi::Error::from_status(Status::Cancelled))
         }
       }

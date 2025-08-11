@@ -2,23 +2,22 @@
 // #[macro_use]
 // extern crate napi_derive;
 
-use std::collections::HashMap;
 use napi::bindgen_prelude::*;
 use napi::sys::{napi_env, napi_value};
 use napi_derive::napi;
+use std::collections::HashMap;
 
 pub mod client;
+pub mod point;
 pub mod query;
 pub mod serializer;
 pub mod write;
-pub mod point;
 // #[global_allocator]
 // static ALLOC: snmalloc_rs::SnMalloc = snmalloc_rs::SnMalloc;
 
 // pub mod influx_proto {
 //   include!(concat!(env!("OUT_DIR"), "/influxdata.iox.querier.v1.rs"));
 // }
-
 
 #[cfg_attr(not(feature = "native"), napi)]
 pub type ReturnDataType = HashMap<String, Option<Value>>;
@@ -69,12 +68,8 @@ impl ToNapiValue for Value {
       Value::Text(t) => ToNapiValue::to_napi_value(env, Ok(t)),
       Value::Null => ToNapiValue::to_napi_value(env, Ok(Null)),
       Value::Bool(bv) => ToNapiValue::to_napi_value(env, Ok(bv)),
-      Value::Time32(value, unit) => {
-        ToNapiValue::to_napi_value(env, Ok(format!("{value}_{unit}")))
-      }
-      Value::Time64(value, unit) => {
-        ToNapiValue::to_napi_value(env, Ok(format!("{value}_{unit}")))
-      }
+      Value::Time32(value, unit) => ToNapiValue::to_napi_value(env, Ok(format!("{value}_{unit}"))),
+      Value::Time64(value, unit) => ToNapiValue::to_napi_value(env, Ok(format!("{value}_{unit}"))),
       Value::String(s) => ToNapiValue::to_napi_value(env, s),
       Value::Fallback => ToNapiValue::to_napi_value(env, Ok(FALLBACK_STR)),
     }
