@@ -323,6 +323,33 @@ jobs:
           platforms: all
       - run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
         if: ${{ contains(matrix.target, 'armv7') }}
+
+      - name: Debug binding resolution
+        run: |
+          echo "=== Available .node files ==="
+          find . -name "*.node" -type f
+          echo ""
+          echo "=== Target info ==="
+          echo "Matrix target: ${{ matrix.target }}"
+          echo "Node version: $(node --version)"
+          echo "Platform: $(node -p 'process.platform')"
+          echo "Arch: $(node -p 'process.arch')"
+          echo ""
+          echo "=== Check index.js logic ==="
+          head -20 index.js
+          echo ""
+          echo "=== Test require ==="
+          node -e "
+            console.log('Process info:', process.platform, process.arch);
+            try {
+              const binding = require('./index.js');
+              console.log('SUCCESS: Binding loaded');
+            } catch (e) {
+              console.log('ERROR:', e.message);
+              console.log('Available files:');
+              require('fs').readdirSync('.').filter(f => f.endsWith('.node')).forEach(f => console.log('  ', f));
+            }
+          "
       - name: Test bindings
         uses: addnab/docker-run-action@v3
         with:
