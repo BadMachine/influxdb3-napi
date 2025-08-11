@@ -204,9 +204,7 @@ impl InfluxDBClient {
           reqwest::StatusCode::UNAUTHORIZED => Err(napi::Error::from_reason("Unauthorized").into()),
           _ => Err(napi::Error::from_reason("Unknown").into()),
         },
-        Err(error) => {
-          Err(napi::Error::from_status(Status::Cancelled))
-        }
+        Err(error) => Err(napi::Error::from_status(Status::Cancelled)),
       }
     }
   }
