@@ -324,34 +324,34 @@ jobs:
       - run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
         if: ${{ contains(matrix.target, 'armv7') }}
 
-#      - name: Debug loading errors
-#        uses: addnab/docker-run-action@v3
-#        with:
-#          image: ${{ steps.docker.outputs.IMAGE }}
-#          options: -v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }} --platform ${{ steps.docker.outputs.PLATFORM }}
-#          run: |
-#            export API_TOKEN="${{ secrets.API_TOKEN }}"
-#            export SERVER_URL="${{ vars.SERVER_URL }}"
-#
-#            echo "=== Debug with manual error extraction ==="
-#            node -e "
-#              try {
-#                const binding = require('./index.js');
-#                console.log('SUCCESS');
-#              } catch (e) {
-#                console.log('Main error:', e.message);
-#                console.log('Error cause:', e.cause);
-#
-#                if (e.cause && Array.isArray(e.cause)) {
-#                  console.log('=== Load Errors ===');
-#                  e.cause.forEach((err, i) => {
-#                    console.log(\`Error \${i + 1}:\`, err.message);
-#                    console.log(\`  Code:\`, err.code);
-#                    console.log(\`  Stack:\`, err.stack.split('\\n')[0]);
-#                  });
-#                }
-#              }
-#            "
+      - name: Debug loading errors
+        uses: addnab/docker-run-action@v3
+        with:
+          image: ${{ steps.docker.outputs.IMAGE }}
+          options: -v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }} --platform ${{ steps.docker.outputs.PLATFORM }}
+          run: |
+            export API_TOKEN="${{ secrets.API_TOKEN }}"
+            export SERVER_URL="${{ vars.SERVER_URL }}"
+
+            echo "=== Debug with manual error extraction ==="
+            node -e "
+              try {
+                const binding = require('./index.js');
+                console.log('SUCCESS');
+              } catch (e) {
+                console.log('Main error:', e.message);
+                console.log('Error cause:', e.cause);
+
+                if (e.cause && Array.isArray(e.cause)) {
+                  console.log('=== Load Errors ===');
+                  e.cause.forEach((err, i) => {
+                    console.log(\`Error \${i + 1}:\`, err.message);
+                    console.log(\`  Code:\`, err.code);
+                    console.log(\`  Stack:\`, err.stack.split('\\n')[0]);
+                  });
+                }
+              }
+            "
       - name: Test bindings
         uses: addnab/docker-run-action@v3
         with:
