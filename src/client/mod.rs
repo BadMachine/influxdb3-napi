@@ -13,12 +13,12 @@ use crate::serializer::SerializerTrait;
 use crate::write::get_write_path;
 use crate::Status;
 use arrow_flight::{FlightClient, Ticket};
-use napi::bindgen_prelude::{block_on, Either3, ReadableStream};
-
+use napi::Env;
 use crate::serializer::raw_serializer::RawSerializer;
 use crate::serializer::unsafe_serializer::UnsafeSerializer;
+use napi::bindgen_prelude::*;
+use napi_derive::napi;
 
-use napi::Env;
 use reqwest::Client;
 use tonic::codegen::Bytes;
 
