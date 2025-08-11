@@ -34,7 +34,6 @@ async fn test_write_points_cloud_serverless() {
   line_one.set_tag(WITH_BACKSLASH.to_string(), "dummy".to_string());
   line_one.set_boolean_field("dummy".to_string(), true);
 
-
   let lp = line_one.to_line_protocol(None, None).unwrap();
 
   println!("wtf {}", lp);
@@ -53,14 +52,13 @@ async fn test_read_data_cloud_serverless() {
   let mut client = InfluxDBClient::new(server_addr, Some(token), Some(Serializer::Library), None);
 
   let result = client
-    .query(
-      QueryPayload {
-        database: "test".to_string(),
-        query: r#"SELECT * FROM "tag_keys" "#.to_string(),
-        _type: None,
-        params: None,
-      },
-    ).await;
+    .query(QueryPayload {
+      database: "test".to_string(),
+      query: r#"SELECT * FROM "tag_keys" "#.to_string(),
+      _type: None,
+      params: None,
+    })
+    .await;
 
   assert!(result.is_ok());
 }

@@ -10,9 +10,9 @@ use arrow::array::{
   UInt8Array,
 };
 use arrow::datatypes::{DataType, TimeUnit};
+use napi_derive::napi;
 use std::collections::HashMap;
 use std::sync::Arc;
-use napi_derive::napi;
 
 pub struct LibrarySerializer;
 

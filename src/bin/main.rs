@@ -15,7 +15,6 @@ async fn main() {
         None
     );
 
-
   // for _ in 0..10 {
   //     let start = Instant::now();
   //     let mut response = client
@@ -45,18 +44,7 @@ async fn main() {
   //     }
   // }
 
-
-
-
-
-
-
-
-
-
-
-
-    // napi::tokio::time::sleep(Duration::from_secs(10)).await;
+  // napi::tokio::time::sleep(Duration::from_secs(10)).await;
   // let mut point = Point::from_measurement(String::from("test_measurement"));
   //
   // let mut fields: HashMap<String, Either5<bool, f64, u32, i64, String>> = HashMap::new();
