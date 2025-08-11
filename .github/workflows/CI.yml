@@ -78,6 +78,11 @@ jobs:
             target: aarch64-unknown-linux-gnu
             setup: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu
             build: yarn build --target aarch64-unknown-linux-gnu --use-napi-cross
+            env:
+              OPENSSL_VENDORED: "1"
+              CC_aarch64_unknown_linux_gnu: "aarch64-linux-gnu-gcc"
+              AR_aarch64_unknown_linux_gnu: "aarch64-linux-gnu-ar"
+              CFLAGS_aarch64_unknown_linux_gnu: "-D__ARM_ARCH=8"
           - host: ubuntu-latest
             target: armv7-unknown-linux-gnueabihf
             build: yarn build --target armv7-unknown-linux-gnueabihf --use-napi-cross
