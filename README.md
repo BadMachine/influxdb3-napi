@@ -49,6 +49,7 @@ In this package, we choose a better way to solve this problem. We release differ
 - Install `Node.js@10+` which fully supported `Node-API`
 - Install `yarn@1.x`
 
+
 ## Test in local
 
 - yarn
