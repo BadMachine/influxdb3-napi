@@ -356,26 +356,6 @@ jobs:
           image: ${{ steps.docker.outputs.IMAGE }}
           options: -v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }} --platform ${{ steps.docker.outputs.PLATFORM }} -e API_TOKEN=${{ secrets.API_TOKEN }} -e SERVER_URL=${{ vars.SERVER_URL }}
           run: |
-            echo "=== Using direct library path ==="
-            export NAPI_RS_NATIVE_LIBRARY_PATH="./influxdb3-napi.linux-x64-gnu.node"
-            export API_TOKEN=${{ secrets.API_TOKEN }}
-            export SERVER_URL=${{ vars.SERVER_URL }}
-            
-            # Проверяем, что файл существует и читается
-            ls -la ./influxdb3-napi.linux-x64-gnu.node
-            
-            echo "=== Test direct path loading ==="
-            node -e "
-            console.log('NAPI_RS_NATIVE_LIBRARY_PATH:', process.env.NAPI_RS_NATIVE_LIBRARY_PATH);
-            try {
-            const binding = require('./index.js');
-            console.log('SUCCESS: Direct path loaded');
-            console.log('Binding type:', typeof binding);
-            } catch (e) {
-            console.log('FAILED:', e.message);
-            console.log('Stack:', e.stack);
-            }
-            "
             yarn test
   publish:
     name: Publish

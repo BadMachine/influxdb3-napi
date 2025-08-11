@@ -57,7 +57,7 @@
     "format:rs": "cargo fmt",
     "lint": "oxlint .",
     "prepublishOnly": "napi prepublish -t npm",
-    "test": "ava",
+    "test": "cross-env NODE_OPTIONS='--import @oxc-node/core/register' ava",
     "version": "napi version",
     "prepare": "husky"
   },
@@ -70,14 +70,15 @@
     "@tybys/wasm-util": "^0.10.0",
     "ava": "^6.4.1",
     "chalk": "^5.4.1",
+    "cross-env": "^10.0.0",
+    "dotenv": "^17.2.1",
     "husky": "^9.1.7",
     "lint-staged": "^16.1.2",
     "npm-run-all2": "^8.0.4",
     "oxlint": "^1.8.0",
     "prettier": "^3.6.2",
     "tinybench": "^4.0.1",
-    "typescript": "^5.8.3",
-    "dotenv": "^17.2.1"
+    "typescript": "^5.8.3"
   },
   "lint-staged": {
     "*.@(js|ts|tsx)": [
