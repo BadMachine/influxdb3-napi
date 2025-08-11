@@ -333,6 +333,7 @@ jobs:
           options: -v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }} --platform ${{ steps.docker.outputs.PLATFORM }}
           run: |
             yarn install
+            yarn build
             yarn test
   publish:
     name: Publish
