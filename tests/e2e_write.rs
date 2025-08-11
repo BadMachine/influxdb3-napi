@@ -36,7 +36,6 @@ async fn test_write_points_cloud_serverless() {
 
   let lp = line_one.to_line_protocol(None, None).unwrap();
 
-  println!("wtf {}", lp);
   let result = client
     .write(vec![lp], String::from("test"), Some(write_options), None)
     .await;

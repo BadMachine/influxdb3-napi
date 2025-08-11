@@ -180,7 +180,6 @@ impl InfluxDBClient {
   ) -> napi::Result<()> {
     let (url, write_options) = get_write_path(&self.addr, database, org, write_options)?;
 
-    println!("SUKA {}", lines.join("\n"));
     let headers = to_header_map(&write_options.headers.unwrap_or_default()).unwrap();
     let response = &self
       .http_client
@@ -206,7 +205,6 @@ impl InfluxDBClient {
           _ => Err(napi::Error::from_reason("Unknown").into()),
         },
         Err(error) => {
-          println!("Error occurred: {error:?}");
           Err(napi::Error::from_status(Status::Cancelled))
         }
       }
