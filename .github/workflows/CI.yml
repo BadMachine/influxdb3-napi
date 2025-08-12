@@ -286,7 +286,7 @@ jobs:
           # Set image based on target
           if [[ "${{ matrix.target }}" == *"-musl" ]]; then
             echo "IMAGE=node:${{ matrix.node }}-alpine" >> $GITHUB_OUTPUT
-          elif [[ "${{ matrix.target }}" == "x86_64-unknown-linux-gnu" ]]; then
+          elif [[ "${{ matrix.target }}" == "x86_64-unknown-linux-gnu" ]] || [[ "${{ matrix.target }}" == "aarch64-unknown-linux-gnu" ]]; then
             echo "IMAGE=ubuntu:24.04" >> $GITHUB_OUTPUT
           else
             echo "IMAGE=node:${{ matrix.node }}" >> $GITHUB_OUTPUT
