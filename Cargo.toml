@@ -4,6 +4,7 @@ authors = ["BadMachine <iskullbreakeri@gmail.com>"]
 edition = "2021"
 name = "influxdb3_napi"
 version = "0.1.0"
+autobins = false
 
 [lib]
 crate-type = ["cdylib","rlib"]
