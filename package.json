@@ -117,18 +117,18 @@
   },
   "packageManager": "yarn@4.9.2",
   "optionalDependencies": {
-    "@badmachine/influxdb3-napi-android-arm-eabi": "1.0.0",
-    "@badmachine/influxdb3-napi-android-arm64": "1.0.0",
-    "@badmachine/influxdb3-napi-darwin-arm64": "1.0.0",
-    "@badmachine/influxdb3-napi-darwin-x64": "1.0.0",
-    "@badmachine/influxdb3-napi-freebsd-x64": "1.0.0",
-    "@badmachine/influxdb3-napi-linux-arm-gnueabihf": "1.0.0",
-    "@badmachine/influxdb3-napi-linux-arm64-gnu": "1.0.0",
-    "@badmachine/influxdb3-napi-linux-arm64-musl": "1.0.0",
-    "@badmachine/influxdb3-napi-linux-x64-gnu": "1.0.0",
-    "@badmachine/influxdb3-napi-linux-x64-musl": "1.0.0",
-    "@badmachine/influxdb3-napi-win32-arm64-msvc": "1.0.0",
-    "@badmachine/influxdb3-napi-win32-ia32-msvc": "1.0.0",
-    "@badmachine/influxdb3-napi-win32-x64-msvc": "1.0.0"
+    "@badmachine/influxdb3-napi-android-arm-eabi": "1.0.2",
+    "@badmachine/influxdb3-napi-android-arm64": "1.0.2",
+    "@badmachine/influxdb3-napi-darwin-arm64": "1.0.2",
+    "@badmachine/influxdb3-napi-darwin-x64": "1.0.2",
+    "@badmachine/influxdb3-napi-freebsd-x64": "1.0.2",
+    "@badmachine/influxdb3-napi-linux-arm-gnueabihf": "1.0.2",
+    "@badmachine/influxdb3-napi-linux-arm64-gnu": "1.0.2",
+    "@badmachine/influxdb3-napi-linux-arm64-musl": "1.0.2",
+    "@badmachine/influxdb3-napi-linux-x64-gnu": "1.0.2",
+    "@badmachine/influxdb3-napi-linux-x64-musl": "1.0.2",
+    "@badmachine/influxdb3-napi-win32-arm64-msvc": "1.0.2",
+    "@badmachine/influxdb3-napi-win32-ia32-msvc": "1.0.2",
+    "@badmachine/influxdb3-napi-win32-x64-msvc": "1.0.2"
   }
 }
