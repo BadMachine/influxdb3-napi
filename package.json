@@ -1,6 +1,6 @@
 {
   "name": "@badmachine/influxdb3-napi",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "Influxdb3 client written in rust and built for nodejs with napi-rs",
   "main": "index.js",
   "repository": {
@@ -141,4 +141,3 @@
     "@badmachine/influxdb3-napi-win32-x64-msvc": "1.0.0"
   }
 }
-
