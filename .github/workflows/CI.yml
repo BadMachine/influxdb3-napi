@@ -274,22 +274,32 @@ jobs:
       - name: Output docker params
         id: docker
         run: |
-          node -e "
-            if ('${{ matrix.target }}'.startsWith('aarch64')) {
-              console.log('PLATFORM=linux/arm64')
-            } else if ('${{ matrix.target }}'.startsWith('armv7')) {
-              console.log('PLATFORM=linux/arm/v7')
-            } else {
-              console.log('PLATFORM=linux/amd64')
-            }
-          " >> $GITHUB_OUTPUT
+          # ... platform logic ...
           node -e "
             if ('${{ matrix.target }}'.endsWith('-musl')) {
               console.log('IMAGE=node:${{ matrix.node }}-alpine')
+            } else if ('${{ matrix.target }}' === 'x86_64-unknown-linux-gnu') {
+              console.log('IMAGE=ubuntu:24.04')
             } else {
-              console.log('IMAGE=node:${{ matrix.node }}-slim')
+              console.log('IMAGE=node:${{ matrix.node }}')
             }
           " >> $GITHUB_OUTPUT
+#          node -e "
+#            if ('${{ matrix.target }}'.startsWith('aarch64')) {
+#              console.log('PLATFORM=linux/arm64')
+#            } else if ('${{ matrix.target }}'.startsWith('armv7')) {
+#              console.log('PLATFORM=linux/arm/v7')
+#            } else {
+#              console.log('PLATFORM=linux/amd64')
+#            }
+#          " >> $GITHUB_OUTPUT
+#          node -e "
+#            if ('${{ matrix.target }}'.endsWith('-musl')) {
+#              console.log('IMAGE=node:${{ matrix.node }}-alpine')
+#            } else {
+#              console.log('IMAGE=node:${{ matrix.node }}-slim')
+#            }
+#          " >> $GITHUB_OUTPUT
       - name: Install dependencies
         run: |
           yarn config set --json supportedArchitectures.cpu '["current", "arm64", "x64", "arm"]'
