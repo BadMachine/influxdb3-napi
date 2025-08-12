@@ -1,6 +1,14 @@
 use crate::serializer::{FlightResult, SerializerTrait};
 use crate::Value;
-use arrow::array::{Array, ArrayData, ArrayRef, BooleanArray, Date32Array, Date64Array, DurationMicrosecondArray, DurationMillisecondArray, DurationNanosecondArray, DurationSecondArray, FixedSizeListArray, Float16Array, Float32Array, Float64Array, Int16Array, Int32Array, Int64Array, Int8Array, LargeListArray, ListArray, RecordBatch, StringArray, StringViewArray, Time32MillisecondArray, Time32SecondArray, Time64MicrosecondArray, Time64NanosecondArray, TimestampMicrosecondArray, TimestampMillisecondArray, TimestampNanosecondArray, TimestampSecondArray, UInt16Array, UInt32Array, UInt64Array, UInt8Array};
+use arrow::array::{
+  Array, ArrayData, ArrayRef, BooleanArray, Date32Array, Date64Array, DurationMicrosecondArray,
+  DurationMillisecondArray, DurationNanosecondArray, DurationSecondArray, FixedSizeListArray,
+  Float16Array, Float32Array, Float64Array, Int16Array, Int32Array, Int64Array, Int8Array,
+  LargeListArray, ListArray, RecordBatch, StringArray, StringViewArray, Time32MillisecondArray,
+  Time32SecondArray, Time64MicrosecondArray, Time64NanosecondArray, TimestampMicrosecondArray,
+  TimestampMillisecondArray, TimestampNanosecondArray, TimestampSecondArray, UInt16Array,
+  UInt32Array, UInt64Array, UInt8Array,
+};
 use arrow::datatypes::{DataType, TimeUnit};
 use napi_derive::napi;
 use std::collections::HashMap;
@@ -245,7 +253,8 @@ impl LibrarySerializer {
             column_values.push(None);
           } else {
             let child_array = arr.value(i);
-            let list_values = Self::extract_fixed_list_values(child_array, field.data_type(), list_size);
+            let list_values =
+              Self::extract_fixed_list_values(child_array, field.data_type(), list_size);
             column_values.push(Some(Value::FixedList(list_values)));
           }
         }
