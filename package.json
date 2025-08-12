@@ -6,6 +6,12 @@
   "repository": "git@github.com:BadMachine/influxdb3-napi.git",
   "license": "MIT",
   "keywords": [
+    "influx",
+    "influxdb",
+    "influxdb3",
+    "client",
+    "influxdb3-client",
+    "flight",
     "napi-rs",
     "NAPI",
     "N-API",
