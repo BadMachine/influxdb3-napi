@@ -1,14 +1,6 @@
 use crate::serializer::{FlightResult, SerializerTrait};
 use crate::Value;
-use arrow::array::{
-  Array, ArrayData, BooleanArray, Date32Array, Date64Array, DurationMicrosecondArray,
-  DurationMillisecondArray, DurationNanosecondArray, DurationSecondArray, Float16Array,
-  Float32Array, Float64Array, Int16Array, Int32Array, Int64Array, Int8Array, RecordBatch,
-  StringArray, StringViewArray, Time32MillisecondArray, Time32SecondArray, Time64MicrosecondArray,
-  Time64NanosecondArray, TimestampMicrosecondArray, TimestampMillisecondArray,
-  TimestampNanosecondArray, TimestampSecondArray, UInt16Array, UInt32Array, UInt64Array,
-  UInt8Array,
-};
+use arrow::array::{Array, ArrayData, ArrayRef, BooleanArray, Date32Array, Date64Array, DurationMicrosecondArray, DurationMillisecondArray, DurationNanosecondArray, DurationSecondArray, FixedSizeListArray, Float16Array, Float32Array, Float64Array, Int16Array, Int32Array, Int64Array, Int8Array, LargeListArray, ListArray, RecordBatch, StringArray, StringViewArray, Time32MillisecondArray, Time32SecondArray, Time64MicrosecondArray, Time64NanosecondArray, TimestampMicrosecondArray, TimestampMillisecondArray, TimestampNanosecondArray, TimestampSecondArray, UInt16Array, UInt32Array, UInt64Array, UInt8Array};
 use arrow::datatypes::{DataType, TimeUnit};
 use napi_derive::napi;
 use std::collections::HashMap;
@@ -244,6 +236,33 @@ impl LibrarySerializer {
       DataType::Time64(time_unit) => {
         Self::serialize_time64_column(&array_data, time_unit, row_count, &mut column_values);
       }
+      DataType::FixedSizeList(field, size) => {
+        let arr = FixedSizeListArray::from(array_data);
+        let list_size = *size as usize;
+
+        for i in 0..row_count {
+          if arr.is_null(i) {
+            column_values.push(None);
+          } else {
+            let child_array = arr.value(i);
+            let list_values = Self::extract_fixed_list_values(child_array, field.data_type(), list_size);
+            column_values.push(Some(Value::FixedList(list_values)));
+          }
+        }
+      }
+      DataType::List(field) | DataType::LargeList(field) => {
+        let arr = ListArray::from(array_data);
+
+        for i in 0..row_count {
+          if arr.is_null(i) {
+            column_values.push(None);
+          } else {
+            let child_array = arr.value(i);
+            let list_values = Self::extract_list_values(child_array, field.data_type());
+            column_values.push(Some(Value::List(list_values)));
+          }
+        }
+      }
       _ => {
         column_values.resize(row_count, Some(Value::Fallback));
       }
@@ -422,5 +441,104 @@ impl LibrarySerializer {
         );
       }
     }
+  }
+
+  fn extract_fixed_list_values(array: ArrayRef, data_type: &DataType, size: usize) -> Vec<Value> {
+    let mut values = Vec::with_capacity(size);
+
+    for i in 0..size {
+      if array.is_null(i) {
+        values.push(Value::Null);
+        continue;
+      }
+
+      let value = match data_type {
+        DataType::Int32 => {
+          let arr = array.as_any().downcast_ref::<Int32Array>().unwrap();
+          Value::Int32(arr.value(i))
+        }
+        DataType::Int64 => {
+          let arr = array.as_any().downcast_ref::<Int64Array>().unwrap();
+          Value::Int64(arr.value(i))
+        }
+        DataType::Float32 => {
+          let arr = array.as_any().downcast_ref::<Float32Array>().unwrap();
+          Value::F32(arr.value(i))
+        }
+        DataType::Float64 => {
+          let arr = array.as_any().downcast_ref::<Float64Array>().unwrap();
+          Value::F64(arr.value(i))
+        }
+        DataType::Utf8 | DataType::LargeUtf8 => {
+          let arr = array.as_any().downcast_ref::<StringArray>().unwrap();
+          Value::String(arr.value(i).to_string())
+        }
+        DataType::Boolean => {
+          let arr = array.as_any().downcast_ref::<BooleanArray>().unwrap();
+          Value::Bool(arr.value(i))
+        }
+        _ => Value::Fallback,
+      };
+
+      values.push(value);
+    }
+
+    values
+  }
+
+  fn extract_list_values(array: ArrayRef, data_type: &DataType) -> Vec<Value> {
+    let size = array.len();
+    let mut values = Vec::with_capacity(size);
+
+    for i in 0..size {
+      if array.is_null(i) {
+        values.push(Value::Null);
+        continue;
+      }
+
+      let value = match data_type {
+        DataType::Int32 => {
+          let arr = array.as_any().downcast_ref::<Int32Array>().unwrap();
+          Value::Int32(arr.value(i))
+        }
+        DataType::Int64 => {
+          let arr = array.as_any().downcast_ref::<Int64Array>().unwrap();
+          Value::Int64(arr.value(i))
+        }
+        DataType::Float32 => {
+          let arr = array.as_any().downcast_ref::<Float32Array>().unwrap();
+          Value::F32(arr.value(i))
+        }
+        DataType::Float64 => {
+          let arr = array.as_any().downcast_ref::<Float64Array>().unwrap();
+          Value::F64(arr.value(i))
+        }
+        DataType::Utf8 | DataType::LargeUtf8 => {
+          let arr = array.as_any().downcast_ref::<StringArray>().unwrap();
+          Value::String(arr.value(i).to_string())
+        }
+        DataType::Boolean => {
+          let arr = array.as_any().downcast_ref::<BooleanArray>().unwrap();
+          Value::Bool(arr.value(i))
+        }
+        // Можно добавить рекурсивную обработку вложенных списков
+        DataType::List(nested_field) => {
+          let nested_list_array = array.as_any().downcast_ref::<ListArray>().unwrap();
+          let nested_child = nested_list_array.value(i);
+          let nested_values = Self::extract_list_values(nested_child, nested_field.data_type());
+          Value::List(nested_values)
+        }
+        DataType::FixedSizeList(nested_field, _) => {
+          let nested_list_array = array.as_any().downcast_ref::<FixedSizeListArray>().unwrap();
+          let nested_child = nested_list_array.value(i);
+          let nested_values = Self::extract_list_values(nested_child, nested_field.data_type());
+          Value::FixedList(nested_values)
+        }
+        _ => Value::Fallback,
+      };
+
+      values.push(value);
+    }
+    values
   }
 }

@@ -43,6 +43,8 @@ pub enum Value {
   Bool(bool),
   Date32(i32),
   Date64(i64),
+  FixedList(Vec<Value>),
+  List(Vec<Value>),
   Null,
   Fallback,
 }
@@ -71,6 +73,8 @@ impl ToNapiValue for Value {
       Value::Time32(value, unit) => ToNapiValue::to_napi_value(env, Ok(format!("{value}_{unit}"))),
       Value::Time64(value, unit) => ToNapiValue::to_napi_value(env, Ok(format!("{value}_{unit}"))),
       Value::String(s) => ToNapiValue::to_napi_value(env, s),
+      Value::FixedList(fl) => ToNapiValue::to_napi_value(env, Ok(fl)),
+      Value::List(l) => ToNapiValue::to_napi_value(env, Ok(l)),
       Value::Fallback => ToNapiValue::to_napi_value(env, Ok(FALLBACK_STR)),
     }
   }
