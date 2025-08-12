@@ -378,7 +378,7 @@ jobs:
             echo "=== glibc version ==="
             ldd --version
             
-            if [[ "${{ steps.docker.outputs.IMAGE }}" == "ubuntu:24.04" ]]; then
+            if [ "${{ steps.docker.outputs.IMAGE }}" = "ubuntu:24.04" ]; then
               echo "=== Installing Node.js ${{ matrix.node }} on Ubuntu 24.04 ==="
               apt-get update -qq
               apt-get install -y curl ca-certificates
