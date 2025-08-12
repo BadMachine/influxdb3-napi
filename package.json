@@ -1,13 +1,12 @@
 {
   "name": "@badmachine/influxdb3-napi",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Influxdb3 client written in rust and built for nodejs with napi-rs",
   "main": "index.js",
   "repository": {
     "type": "git",
     "url": "git+ssh://git@github.com/BadMachine/influxdb3-napi.git"
   },
-
   "license": "MIT",
   "keywords": [
     "influx",
