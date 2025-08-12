@@ -5,6 +5,30 @@ __metadata:
   version: 8
   cacheKey: 10c0
 
+"@badmachine/influxdb3-napi@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "@badmachine/influxdb3-napi@workspace:."
+  dependencies:
+    "@emnapi/core": "npm:^1.4.5"
+    "@emnapi/runtime": "npm:^1.4.5"
+    "@napi-rs/cli": "npm:^3.0.3"
+    "@oxc-node/core": "npm:^0.0.30"
+    "@taplo/cli": "npm:^0.7.0"
+    "@tybys/wasm-util": "npm:^0.10.0"
+    ava: "npm:^6.4.1"
+    chalk: "npm:^5.4.1"
+    cross-env: "npm:^10.0.0"
+    dotenv: "npm:^17.2.1"
+    husky: "npm:^9.1.7"
+    lint-staged: "npm:^16.1.2"
+    npm-run-all2: "npm:^8.0.4"
+    oxlint: "npm:^1.8.0"
+    prettier: "npm:^3.6.2"
+    tinybench: "npm:^4.0.1"
+    typescript: "npm:^5.8.3"
+  languageName: unknown
+  linkType: soft
+
 "@emnapi/core@npm:^1.4.5":
   version: 1.4.5
   resolution: "@emnapi/core@npm:1.4.5"
@@ -2146,30 +2170,6 @@ __metadata:
   checksum: 10c0/8ee77b57d92e71745e133f6f444d6fa3ed503ad0e1bcd7e80c8da08b42375c07117128d670589725ed07b1978065803fa86318c309ba45415b7fe13e7f170220
   languageName: node
   linkType: hard
-
-"influxdb3-napi@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "influxdb3-napi@workspace:."
-  dependencies:
-    "@emnapi/core": "npm:^1.4.5"
-    "@emnapi/runtime": "npm:^1.4.5"
-    "@napi-rs/cli": "npm:^3.0.3"
-    "@oxc-node/core": "npm:^0.0.30"
-    "@taplo/cli": "npm:^0.7.0"
-    "@tybys/wasm-util": "npm:^0.10.0"
-    ava: "npm:^6.4.1"
-    chalk: "npm:^5.4.1"
-    cross-env: "npm:^10.0.0"
-    dotenv: "npm:^17.2.1"
-    husky: "npm:^9.1.7"
-    lint-staged: "npm:^16.1.2"
-    npm-run-all2: "npm:^8.0.4"
-    oxlint: "npm:^1.8.0"
-    prettier: "npm:^3.6.2"
-    tinybench: "npm:^4.0.1"
-    typescript: "npm:^5.8.3"
-  languageName: unknown
-  linkType: soft
 
 "irregular-plurals@npm:^3.3.0":
   version: 3.5.0
