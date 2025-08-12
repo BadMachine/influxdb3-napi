@@ -274,16 +274,23 @@ jobs:
       - name: Output docker params
         id: docker
         run: |
-          # ... platform logic ...
-          node -e "
-            if ('${{ matrix.target }}'.endsWith('-musl')) {
-              console.log('IMAGE=node:${{ matrix.node }}-alpine')
-            } else if ('${{ matrix.target }}' === 'x86_64-unknown-linux-gnu') {
-              console.log('IMAGE=ubuntu:24.04')
-            } else {
-              console.log('IMAGE=node:${{ matrix.node }}')
-            }
-          " >> $GITHUB_OUTPUT
+          # Set platform based on target
+          if [[ "${{ matrix.target }}" == aarch64* ]]; then
+            echo "PLATFORM=linux/arm64" >> $GITHUB_OUTPUT
+          elif [[ "${{ matrix.target }}" == armv7* ]]; then
+            echo "PLATFORM=linux/arm/v7" >> $GITHUB_OUTPUT
+          else
+            echo "PLATFORM=linux/amd64" >> $GITHUB_OUTPUT
+          fi
+
+          # Set image based on target
+          if [[ "${{ matrix.target }}" == *"-musl" ]]; then
+            echo "IMAGE=node:${{ matrix.node }}-alpine" >> $GITHUB_OUTPUT
+          elif [[ "${{ matrix.target }}" == "x86_64-unknown-linux-gnu" ]]; then
+            echo "IMAGE=ubuntu:24.04" >> $GITHUB_OUTPUT
+          else
+            echo "IMAGE=node:${{ matrix.node }}" >> $GITHUB_OUTPUT
+          fi
 #          node -e "
 #            if ('${{ matrix.target }}'.startsWith('aarch64')) {
 #              console.log('PLATFORM=linux/arm64')
