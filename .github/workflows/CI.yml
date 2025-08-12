@@ -1,9 +1,9 @@
 name: CI
 env:
   DEBUG: napi:*
-  APP_NAME: influxdb3-napi
   MACOSX_DEPLOYMENT_TARGET: '10.13'
   CARGO_INCREMENTAL: '1'
+  APP_NAME: influxdb3-napi
   API_TOKEN: ${{ secrets.API_TOKEN }}
   SERVER_URL: ${{ vars.SERVER_URL }}
 'on':
@@ -28,27 +28,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-
       - name: Setup node
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'yarn'
-
+          cache: yarn
       - name: Install
         uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy, rustfmt
-
       - name: Install dependencies
         run: yarn install
-
       - name: Oxlint
         run: yarn lint
-
       - name: Cargo fmt
         run: cargo fmt -- --check
-
       - name: Clippy
         run: cargo clippy
   build:
@@ -79,10 +73,10 @@ jobs:
             setup: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu
             build: yarn build --target aarch64-unknown-linux-gnu --use-napi-cross
             env:
-              OPENSSL_VENDORED: "1"
-              CC_aarch64_unknown_linux_gnu: "aarch64-linux-gnu-gcc"
-              AR_aarch64_unknown_linux_gnu: "aarch64-linux-gnu-ar"
-              CFLAGS_aarch64_unknown_linux_gnu: "-D__ARM_ARCH=8"
+              OPENSSL_VENDORED: '1'
+              CC_aarch64_unknown_linux_gnu: aarch64-linux-gnu-gcc
+              AR_aarch64_unknown_linux_gnu: aarch64-linux-gnu-ar
+              CFLAGS_aarch64_unknown_linux_gnu: '-D__ARM_ARCH=8'
           - host: ubuntu-latest
             target: armv7-unknown-linux-gnueabihf
             build: yarn build --target armv7-unknown-linux-gnueabihf --use-napi-cross
@@ -170,7 +164,7 @@ jobs:
           version: '14.2'
           memory: 8G
           cpu_count: 3
-          environment_variables: 'DEBUG RUSTUP_IO_THREADS'
+          environment_variables: DEBUG RUSTUP_IO_THREADS
           shell: bash
           run: |
             sudo pkg install -y -f curl node libnghttp2 npm cmake
@@ -291,22 +285,6 @@ jobs:
           else
             echo "IMAGE=node:${{ matrix.node }}" >> $GITHUB_OUTPUT
           fi
-#          node -e "
-#            if ('${{ matrix.target }}'.startsWith('aarch64')) {
-#              console.log('PLATFORM=linux/arm64')
-#            } else if ('${{ matrix.target }}'.startsWith('armv7')) {
-#              console.log('PLATFORM=linux/arm/v7')
-#            } else {
-#              console.log('PLATFORM=linux/amd64')
-#            }
-#          " >> $GITHUB_OUTPUT
-#          node -e "
-#            if ('${{ matrix.target }}'.endsWith('-musl')) {
-#              console.log('IMAGE=node:${{ matrix.node }}-alpine')
-#            } else {
-#              console.log('IMAGE=node:${{ matrix.node }}-slim')
-#            }
-#          " >> $GITHUB_OUTPUT
       - name: Install dependencies
         run: |
           yarn config set --json supportedArchitectures.cpu '["current", "arm64", "x64", "arm"]'
@@ -329,7 +307,6 @@ jobs:
           node --version
           echo "=== Platform info ==="
           uname -a
-
       - name: List packages
         run: ls -R .
         shell: bash
@@ -340,16 +317,15 @@ jobs:
           platforms: all
       - run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
         if: ${{ contains(matrix.target, 'armv7') }}
-
       - name: Test bindings
         uses: addnab/docker-run-action@v3
         with:
           image: ${{ steps.docker.outputs.IMAGE }}
-          options: -v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }} --platform ${{ steps.docker.outputs.PLATFORM }} -e API_TOKEN=${{ secrets.API_TOKEN }} -e SERVER_URL=${{ vars.SERVER_URL }}
+          options: '-v ${{ github.workspace }}:${{ github.workspace }} -w ${{ github.workspace }} --platform ${{ steps.docker.outputs.PLATFORM }} -e API_TOKEN=${{ secrets.API_TOKEN }} -e SERVER_URL=${{ vars.SERVER_URL }}'
           run: |
             echo "=== glibc version ==="
             ldd --version
-            
+
             if [ "${{ steps.docker.outputs.IMAGE }}" = "ubuntu:24.04" ]; then
               echo "=== Installing Node.js ${{ matrix.node }} on Ubuntu 24.04 ==="
               apt-get update -qq

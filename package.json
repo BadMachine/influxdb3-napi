@@ -1,5 +1,5 @@
 {
-  "name": "influxdb3-napi",
+  "name": "@badmachine/influxdb3-napi",
   "version": "1.0.0",
   "description": "Influxdb3 client written in rust and built for nodejs with napi-rs",
   "main": "index.js",
