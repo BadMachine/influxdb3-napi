@@ -3,7 +3,7 @@ env:
   DEBUG: napi:*
   MACOSX_DEPLOYMENT_TARGET: '10.13'
   CARGO_INCREMENTAL: '1'
-  APP_NAME: @badmachine/influxdb3-napi
+  APP_NAME: '@badmachine/influxdb3-napi'
   API_TOKEN: ${{ secrets.API_TOKEN }}
   SERVER_URL: ${{ vars.SERVER_URL }}
 'on':
