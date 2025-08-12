@@ -26,7 +26,7 @@ pub enum PointFieldValue {
   Boolean(bool),
 }
 
-type Field<'a> = Either5<&'a bool, &'a f64, &'a u32, &'a i64, &'a String>;
+// type Field<'a> = Either5<&'a bool, &'a f64, &'a u32, &'a i64, &'a String>;
 
 impl Display for PointFieldValue {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
@@ -205,12 +205,13 @@ impl PointValues {
     }
   }
 
+  #[allow(clippy::type_complexity)]
   #[cfg_attr(not(feature = "native"), napi)]
   pub fn get_field(
     &self,
     name: String,
     expected_type: Option<PointFieldType>,
-  ) -> napi::Result<Option<Field<'_>>> {
+  ) -> napi::Result<Option<Either5<&bool, &f64, &u32, &i64, &String>>> {
     let field_entry = self.fields.get(&name);
 
     match field_entry {

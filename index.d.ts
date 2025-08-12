@@ -2,7 +2,7 @@
 /* eslint-disable */
 export declare class InfluxDbClient {
   constructor(addr: string, token?: string | undefined | null, serializer?: Serializer | undefined | null, options?: FlightOptions | undefined | null)
-  query(queryPayload: QueryPayload): EitherStream
+  query(queryPayload: QueryPayload): ReadableStream<LibraryReturnType> | ReadableStream<Record<string, any>> | ReadableStream<Buffer>
   /**
    * # Safety
    *
@@ -63,7 +63,7 @@ export declare class PointValues {
   getBooleanField(name: string): boolean | null
   setBooleanField(name: string, value: boolean): void
   getFieldType(name: string): PointFieldType | null
-  getField(name: string, expectedType?: PointFieldType | undefined | null): Field | null
+  getField(name: string, expectedType?: PointFieldType | undefined | null): any | null
   setField(name: string, value: any, fieldType?: PointFieldType | undefined | null): void
   setFields(values: Record<string, any>): void
   removeField(name: string): void

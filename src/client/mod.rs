@@ -22,12 +22,6 @@ use napi_derive::napi;
 use reqwest::Client;
 use tonic::codegen::Bytes;
 
-type LibraryStream<'a> = ReadableStream<'a, LibraryReturnType>;
-type UnsafeStream<'a> = ReadableStream<'a, serde_json::Map<String, serde_json::Value>>;
-type RawStream<'a> = ReadableStream<'a, napi::bindgen_prelude::Buffer>;
-
-type EitherStream<'a> = Either3<LibraryStream<'a>, UnsafeStream<'a>, RawStream<'a>>;
-
 #[cfg_attr(not(feature = "native"), napi_derive::napi)]
 pub struct InfluxDBClient {
   addr: String,
@@ -114,13 +108,20 @@ impl InfluxDBClient {
     ReadableStream::new(env, stream)
   }
 
+  #[allow(clippy::type_complexity)]
   #[cfg(not(feature = "native"))]
   #[napi_derive::napi]
   pub fn query(
     &mut self,
     query_payload: QueryPayload,
     env: &Env,
-  ) -> napi::Result<EitherStream<'_>> {
+  ) -> napi::Result<
+    Either3<
+      ReadableStream<'_, LibraryReturnType>,
+      ReadableStream<'_, serde_json::Map<String, serde_json::Value>>,
+      ReadableStream<'_, napi::bindgen_prelude::Buffer>,
+    >,
+  > {
     match self.serializer {
       Serializer::Library => {
         let stream = self.query_inner::<LibrarySerializer>(query_payload, env)?;
