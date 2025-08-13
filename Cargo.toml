@@ -32,23 +32,23 @@ features = ["full","experimental","tokio","web_stream","tokio-stream"]
 
 [dependencies.reqwest]
 version = "0.12"
-features = ["json","__rustls","gzip"]
+features = ["json","rustls-tls-native-roots-no-provider","gzip"]
 
 [dependencies.tonic]
-version = "0.12.3"
-features = ["gzip","tls-native-roots","tls-webpki-roots"]
+version = "0.13"
+features = ["gzip","tls-native-roots","tls-webpki-roots", "tls-ring"] # since rustls update it requires to manually initialize cryptoprovider
 
 [dependencies.arrow]
-version = "55.2.0"
+version = "56.0.0"
 features = ["arrow-json"]
 
 [dependencies.arrow-flight]
-version = "55.2.0"
+version = "56.0.0"
 features = ["flight-sql"]
 
 [dependencies.serde_arrow]
-version = "0.13.4"
-features = ["arrow-55"]
+version = "0.13.5"
+features = ["arrow-56"]
 
 [build-dependencies]
 napi-build = "2.2.3"

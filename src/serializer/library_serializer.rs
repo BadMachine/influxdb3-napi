@@ -254,7 +254,7 @@ impl LibrarySerializer {
           } else {
             let child_array = arr.value(i);
             let list_values =
-              Self::extract_list_values(child_array, field.data_type(), Some(list_size));
+              Self::extract_list_values(&child_array, field.data_type(), Some(list_size));
             column_values.push(Some(Value::FixedList(list_values)));
           }
         }
@@ -267,7 +267,7 @@ impl LibrarySerializer {
             column_values.push(None);
           } else {
             let child_array = arr.value(i);
-            let list_values = Self::extract_list_values(child_array, field.data_type(), None);
+            let list_values = Self::extract_list_values(&child_array, field.data_type(), None);
             column_values.push(Some(Value::List(list_values)));
           }
         }
@@ -453,7 +453,7 @@ impl LibrarySerializer {
   }
 
   fn extract_list_values(
-    array: ArrayRef,
+    array: &ArrayRef,
     data_type: &DataType,
     _size: Option<usize>,
   ) -> Vec<Value> {

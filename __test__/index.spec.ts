@@ -46,7 +46,6 @@ test('Test write lp to cloud serverless', async (t) => {
 
   try {
     const lp = point.toLineProtocol("ns") || '';
-    console.log(lp)
     await client.write([lp], "test",  {
       noSync: false,
       precision: { type: 'V2', field0: 'ns' },
@@ -57,4 +56,21 @@ test('Test write lp to cloud serverless', async (t) => {
     console.error(e);
     t.fail()
   }
+})
+
+
+test('Test sql query from CORE', async (t) => {
+  const client = new InfluxDbClient(process.env.CORE_SERVER_URL || '', process.env.CORE_API_TOKEN || '')
+
+  const result = client.query({
+    database: 'test_types',
+    query: 'SELECT * FROM all_types',
+  })
+
+  const arr = []
+  for await (const item of result) {
+    arr.push(item)
+  }
+
+  t.true(arr.length > 0)
 })

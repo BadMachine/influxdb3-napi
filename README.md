@@ -6,6 +6,12 @@
 
 High-performance Node.js client for InfluxDB 3.0 with native Rust bindings, supporting both read and write operations.
 
+## Installation
+
+```bash
+npm install @badmachine/influxdb3-napi
+```
+
 ## Features
 
 - **High Performance** - Native Rust bindings for optimal performance
@@ -14,11 +20,14 @@ High-performance Node.js client for InfluxDB 3.0 with native Rust bindings, supp
 - **TypeScript Support** - Full TypeScript definitions included
 - **Type Safe** - Built with type safety in mind
 
-## Installation
-
-```bash
-npm install @badmachine/influxdb3-napi
-```
+# Why?
+- This library was initially inspired by the need to handle edge cases where other libraries fail to decode certain Arrow Flight data types (see [InfluxCommunity/influxdb3-js#590](https://github.com/InfluxCommunity/influxdb3-js/issues/590)). It correctly supports all data types returned by InfluxDB.
+- **Unlike this library**, some requests to `https` hosts were failing with other JS libraries due to self-signed certificate check errors
+-  ~~Blazingly™~~ Much  faster than other libraries when querying the data.
+- Includes three different serializers for maximum flexibility:
+  - **Default serializer** — conveniently converts time intervals.
+  - **Serde-based serializer** — leverages `serde` for basic json serialization.
+  - **Raw serializer** — returns the raw byte array buffer.
 
 ## Quick Start
 
@@ -54,166 +63,9 @@ for await (const row of result) {
 }
 ```
 
-## API Reference
-
-### InfluxDbClient
-
-#### Constructor
-
-```javascript
-new InfluxDbClient(host, token)
-```
-
-**Parameters:**
-- `host` (string) - InfluxDB server URL (e.g., 'http://localhost:8086')
-- `token` (string) - Authentication token
-
-#### Methods
-
-##### `query(options)`
-
-Execute a SQL query and return an async iterator.
-
-**Parameters:**
-- `options` (object):
-  - `database` (string) - Target database name
-  - `query` (string) - SQL query string
-  - `type?` (string) - Query type, defaults to 'sql'
-
-**Returns:** `AsyncIterator<object>` - Async iterator over query results
-
-**Example:**
-```javascript
-const queryResult = client.query({
-  database: 'mydb',
-  query: 'SELECT mean(temperature) FROM sensors WHERE time > now() - 1h GROUP BY time(10m)',
-  type: 'sql'
-});
-
-const results = [];
-for await (const row of queryResult) {
-  results.push(row);
-}
-```
-
-##### `write(lineProtocols, database, options?)`
-
-Write data using line protocol format.
-
-**Parameters:**
-- `lineProtocols` (string[]) - Array of line protocol strings
-- `database` (string) - Target database name
-- `options?` (object):
-  - `noSync?` (boolean) - Disable synchronous write (default: false)
-  - `precision?` (object) - Timestamp precision
-    - `type` ('V2') - Precision type
-    - `field0` ('ns'|'us'|'ms'|'s') - Time unit
-  - `gzip?` (boolean) - Enable gzip compression (default: false)
-
-**Example:**
-```javascript
-const lineProtocols = [
-  'temperature,location=office value=23.5 1234567890000000000',
-  'humidity,location=office value=45.2 1234567890000000000'
-];
-
-await client.write(lineProtocols, 'sensors', {
-  noSync: false,
-  precision: { type: 'V2', field0: 'ns' },
-  gzip: false
-});
-```
-
-### Point Builder
-
-#### `Point.fromMeasurement(measurement)`
-
-Create a new Point instance.
-
-**Parameters:**
-- `measurement` (string) - Measurement name
-
-**Returns:** Point instance for method chaining
-
-#### Point Methods
-
-##### `setTag(key, value)`
-Set a tag key-value pair.
-
-##### `setBooleanField(key, value)`
-Set a boolean field.
-
-##### `setFloatField(key, value)`
-Set a numeric field.
-
-##### `setStringField(key, value)`
-Set a string field.
-
-##### `toLineProtocol(precision?)`
-Convert point to line protocol string.
-
-**Example:**
-```javascript
-const point = Point.fromMeasurement('cpu_usage')
-  .setTag('host', 'server01')
-  .setTag('region', 'us-east-1')
-  .setFloatField('usage_percent', 85.2)
-  .setBooleanField('alert', false);
-
-const lineProtocol = point.toLineProtocol('ns');
-// Result: cpu_usage,host=server01,region=us-east-1 usage_percent=85.2,alert=false
-```
-
-
 ## TypeScript Support
 
 Full TypeScript definitions are included:
-
-```typescript
-import { InfluxDbClient, Point } from '@badmachine/influxdb3-napi';
-
-interface SensorData {
-  temperature: number;
-  humidity: number;
-  timestamp: number;
-}
-
-const client = new InfluxDbClient(
-  process.env.INFLUX_HOST!,
-  process.env.INFLUX_TOKEN!
-);
-
-const point = Point.fromMeasurement('sensors')
-  .setTag('location', 'office')
-  .setFloatField('temperature', 23.5)
-  .setFloatField('humidity', 45.2);
-
-await client.write([point.toLineProtocol('ns')], 'environmental');
-```
-
-## Error Handling
-
-```javascript
-try {
-  const result = client.query({
-    database: 'mydb',
-    query: 'SELECT * FROM measurements'
-  });
-  
-  for await (const row of result) {
-    console.log(row);
-  }
-} catch (error) {
-  console.error('Query failed:', error.message);
-}
-
-try {
-  await client.write(['invalid line protocol'], 'mydb');
-} catch (error) {
-  console.error('Write failed:', error.message);
-}
-```
-
 
 ## Contributing
 
