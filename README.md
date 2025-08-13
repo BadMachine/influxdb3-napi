@@ -1,86 +1,234 @@
-# `@napi-rs/package-template`
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/8a984535-1704-44af-ba85-bd6859f99949" alt="influxdb3-napi Logo" width="300"/>
+</p>
 
-![https://github.com/napi-rs/package-template/actions](https://github.com/napi-rs/package-template/workflows/CI/badge.svg)
+# influxdb3-napi
 
-> Template project for writing node packages with napi-rs.
+High-performance Node.js client for InfluxDB 3.0 with native Rust bindings, supporting both read and write operations.
 
-# Usage
+## Features
 
-1. Click **Use this template**.
-2. **Clone** your project.
-3. Run `yarn install` to install dependencies.
-4. Run `yarn napi rename -n [@your-scope/package-name] -b [binary-name]` command under the project folder to rename your package.
+- **High Performance** - Native Rust bindings for optimal performance
+- **SQL Queries** - Execute SQL queries with async iterator support
+- **Line Protocol Writing** - Write data using InfluxDB line protocol
+- **TypeScript Support** - Full TypeScript definitions included
+- **Type Safe** - Built with type safety in mind
 
-## Install this test package
-
-```
-yarn add @napi-rs/package-template
-```
-
-## Ability
-
-### Build
-
-After `yarn build/npm run build` command, you can see `package-template.[darwin|win32|linux].node` file in project root. This is the native addon built from [lib.rs](./src/lib.rs).
-
-### Test
-
-With [ava](https://github.com/avajs/ava), run `yarn test/npm run test` to testing native addon. You can also switch to another testing framework if you want.
-
-### CI
-
-With GitHub Actions, each commit and pull request will be built and tested automatically in [`node@20`, `@node22`] x [`macOS`, `Linux`, `Windows`] matrix. You will never be afraid of the native addon broken in these platforms.
-
-### Release
-
-Release native package is very difficult in old days. Native packages may ask developers who use it to install `build toolchain` like `gcc/llvm`, `node-gyp` or something more.
-
-With `GitHub actions`, we can easily prebuild a `binary` for major platforms. And with `N-API`, we should never be afraid of **ABI Compatible**.
-
-The other problem is how to deliver prebuild `binary` to users. Downloading it in `postinstall` script is a common way that most packages do it right now. The problem with this solution is it introduced many other packages to download binary that has not been used by `runtime codes`. The other problem is some users may not easily download the binary from `GitHub/CDN` if they are behind a private network (But in most cases, they have a private NPM mirror).
-
-In this package, we choose a better way to solve this problem. We release different `npm packages` for different platforms. And add it to `optionalDependencies` before releasing the `Major` package to npm.
-
-`NPM` will choose which native package should download from `registry` automatically. You can see [npm](./npm) dir for details. And you can also run `yarn add @napi-rs/package-template` to see how it works.
-
-## Develop requirements
-
-- Install the latest `Rust`
-- Install `Node.js@10+` which fully supported `Node-API`
-- Install `yarn@1.x`
-
-
-## Test in local
-
-- yarn
-- yarn build
-- yarn test
-
-And you will see:
+## Installation
 
 ```bash
-$ ava --verbose
-
-  ✔ sync function from native code
-  ✔ sleep function from native code (201ms)
-  ─
-
-  2 tests passed
-✨  Done in 1.12s.
+npm install @badmachine/influxdb3-napi
 ```
 
-## Release package
+## Quick Start
 
-Ensure you have set your **NPM_TOKEN** in the `GitHub` project setting.
+```javascript
+import { InfluxDbClient, Point } from '@badmachine/influxdb3-napi';
 
-In `Settings -> Secrets`, add **NPM_TOKEN** into it.
+// Initialize client
+const client = new InfluxDbClient(
+  'http://your-influxdb-host:8086',
+  'your-api-token'
+);
 
-When you want to release the package:
+// Write data using Point builder
+const point = Point.fromMeasurement('temperature')
+  .setTag('location', 'office')
+  .setTag('sensor', 'temp01')
+  .setBooleanField('active', true)
+  .setFloatField('value', 23.5);
 
+const lineProtocol = point.toLineProtocol('ns');
+await client.write([lineProtocol], 'your-database');
+
+// Query data with async iteration
+const result = client.query({
+  database: 'your-database',
+  query: 'SELECT * FROM temperature WHERE time > now() - 1h',
+  type: 'sql'
+});
+
+// Stream results efficiently
+for await (const row of result) {
+  console.log(row);
+}
 ```
-npm version [<newversion> | major | minor | patch | premajor | preminor | prepatch | prerelease [--preid=<prerelease-id>] | from-git]
 
-git push
+## API Reference
+
+### InfluxDbClient
+
+#### Constructor
+
+```javascript
+new InfluxDbClient(host, token)
 ```
 
-GitHub actions will do the rest job for you.
+**Parameters:**
+- `host` (string) - InfluxDB server URL (e.g., 'http://localhost:8086')
+- `token` (string) - Authentication token
+
+#### Methods
+
+##### `query(options)`
+
+Execute a SQL query and return an async iterator.
+
+**Parameters:**
+- `options` (object):
+  - `database` (string) - Target database name
+  - `query` (string) - SQL query string
+  - `type?` (string) - Query type, defaults to 'sql'
+
+**Returns:** `AsyncIterator<object>` - Async iterator over query results
+
+**Example:**
+```javascript
+const queryResult = client.query({
+  database: 'mydb',
+  query: 'SELECT mean(temperature) FROM sensors WHERE time > now() - 1h GROUP BY time(10m)',
+  type: 'sql'
+});
+
+const results = [];
+for await (const row of queryResult) {
+  results.push(row);
+}
+```
+
+##### `write(lineProtocols, database, options?)`
+
+Write data using line protocol format.
+
+**Parameters:**
+- `lineProtocols` (string[]) - Array of line protocol strings
+- `database` (string) - Target database name
+- `options?` (object):
+  - `noSync?` (boolean) - Disable synchronous write (default: false)
+  - `precision?` (object) - Timestamp precision
+    - `type` ('V2') - Precision type
+    - `field0` ('ns'|'us'|'ms'|'s') - Time unit
+  - `gzip?` (boolean) - Enable gzip compression (default: false)
+
+**Example:**
+```javascript
+const lineProtocols = [
+  'temperature,location=office value=23.5 1234567890000000000',
+  'humidity,location=office value=45.2 1234567890000000000'
+];
+
+await client.write(lineProtocols, 'sensors', {
+  noSync: false,
+  precision: { type: 'V2', field0: 'ns' },
+  gzip: false
+});
+```
+
+### Point Builder
+
+#### `Point.fromMeasurement(measurement)`
+
+Create a new Point instance.
+
+**Parameters:**
+- `measurement` (string) - Measurement name
+
+**Returns:** Point instance for method chaining
+
+#### Point Methods
+
+##### `setTag(key, value)`
+Set a tag key-value pair.
+
+##### `setBooleanField(key, value)`
+Set a boolean field.
+
+##### `setFloatField(key, value)`
+Set a numeric field.
+
+##### `setStringField(key, value)`
+Set a string field.
+
+##### `toLineProtocol(precision?)`
+Convert point to line protocol string.
+
+**Example:**
+```javascript
+const point = Point.fromMeasurement('cpu_usage')
+  .setTag('host', 'server01')
+  .setTag('region', 'us-east-1')
+  .setFloatField('usage_percent', 85.2)
+  .setBooleanField('alert', false);
+
+const lineProtocol = point.toLineProtocol('ns');
+// Result: cpu_usage,host=server01,region=us-east-1 usage_percent=85.2,alert=false
+```
+
+
+## TypeScript Support
+
+Full TypeScript definitions are included:
+
+```typescript
+import { InfluxDbClient, Point } from '@badmachine/influxdb3-napi';
+
+interface SensorData {
+  temperature: number;
+  humidity: number;
+  timestamp: number;
+}
+
+const client = new InfluxDbClient(
+  process.env.INFLUX_HOST!,
+  process.env.INFLUX_TOKEN!
+);
+
+const point = Point.fromMeasurement('sensors')
+  .setTag('location', 'office')
+  .setFloatField('temperature', 23.5)
+  .setFloatField('humidity', 45.2);
+
+await client.write([point.toLineProtocol('ns')], 'environmental');
+```
+
+## Error Handling
+
+```javascript
+try {
+  const result = client.query({
+    database: 'mydb',
+    query: 'SELECT * FROM measurements'
+  });
+  
+  for await (const row of result) {
+    console.log(row);
+  }
+} catch (error) {
+  console.error('Query failed:', error.message);
+}
+
+try {
+  await client.write(['invalid line protocol'], 'mydb');
+} catch (error) {
+  console.error('Write failed:', error.message);
+}
+```
+
+
+## Contributing
+
+Contributions are welcome! Please read our contributing guidelines and submit pull requests to our repository.
+
+## License
+
+MIT License - see LICENSE file for details.
+
+## Support
+
+- [Documentation](https://github.com/badmachine/influxdb3-napi)
+- [Issue Tracker](https://github.com/badmachine/influxdb3-napi/issues)
+- [Discussions](https://github.com/badmachine/influxdb3-napi/discussions)
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for version history and changes.
