@@ -1,6 +1,5 @@
 mod escape;
 pub mod point_values;
-
 use crate::client::options::TimeUnitV2;
 use crate::point::escape::{escape, COMMA_EQ_SPACE, COMMA_SPACE};
 use crate::point::point_values::{PointFieldType, PointValues};

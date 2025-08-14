@@ -1,7 +1,7 @@
-use influxdb3_napi::client::options::{Precision, QueryPayload, TimeUnitV2};
-use influxdb3_napi::client::{InfluxDBClient, WriteOptions};
+use influxdb3_napi::client::native::client::InfluxDBClient;
+use influxdb3_napi::client::options::{Precision, QueryPayload, TimeUnitV2, WriteOptions};
 use influxdb3_napi::point::Point;
-use influxdb3_napi::serializer::Serializer;
+use influxdb3_napi::serializer::common::Serializer;
 
 #[tokio::test]
 async fn test_write_points_cloud_serverless() {

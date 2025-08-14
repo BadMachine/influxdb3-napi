@@ -58,7 +58,7 @@
     "bench": "node --import @oxc-node/core/register benchmark/bench.ts",
     "build": "napi build --platform --release --no-const-enum",
     "build:wasm-unknown": "napi build --platform --release -t wasm32-unknown-unknown",
-    "build:wasip2": "napi build --platform --release -t wasm32-wasip2",
+    "build:wasip1-threads": "napi build --platform --release -t wasm32-wasip1-threads",
     "build:debug": "napi build --platform",
     "format": "run-p format:prettier format:rs format:toml",
     "format:prettier": "prettier . -w",
@@ -139,5 +139,8 @@
     "@badmachine/influxdb3-napi-win32-arm64-msvc": "1.0.0",
     "@badmachine/influxdb3-napi-win32-ia32-msvc": "1.0.0",
     "@badmachine/influxdb3-napi-win32-x64-msvc": "1.0.0"
+  },
+  "dependencies": {
+    "@napi-rs/wasm-runtime": "^1.0.3"
   }
 }

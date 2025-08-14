@@ -13,6 +13,7 @@ test('Test sql query from cloud serverless', async (t) => {
 
   const arr = []
   for await (const item of result) {
+    console.log(item)
     arr.push(item)
   }
 
