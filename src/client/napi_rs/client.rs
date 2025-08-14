@@ -17,7 +17,6 @@ use napi::tokio_stream::wrappers::ReceiverStream;
 use reqwest::Client;
 use tonic::codegen::Bytes;
 
-#[cfg(not(target_arch = "wasm32"))]
 #[napi_derive::napi]
 pub struct InfluxDBClient {
     addr: String,
@@ -26,10 +25,9 @@ pub struct InfluxDBClient {
     http_client: Client,
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 #[napi_derive::napi]
 impl InfluxDBClient {
-
+    #[napi(constructor)]
     pub fn new(
         addr: String,
         token: Option<String>,

@@ -139,5 +139,8 @@
     "@badmachine/influxdb3-napi-win32-arm64-msvc": "1.0.0",
     "@badmachine/influxdb3-napi-win32-ia32-msvc": "1.0.0",
     "@badmachine/influxdb3-napi-win32-x64-msvc": "1.0.0"
+  },
+  "dependencies": {
+    "@napi-rs/wasm-runtime": "^1.0.3"
   }
 }

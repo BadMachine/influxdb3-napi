@@ -23,7 +23,8 @@ pub struct InfluxDBClient {
                                                         // impl InfluxClientTrait for InfluxDBClient {
 #[napi_derive::napi]
 impl InfluxDBClient {
-  fn new(
+  #[napi(constructor)]
+  pub fn new(
     addr: String,
     token: Option<String>,
     serializer: Option<Serializer>,
