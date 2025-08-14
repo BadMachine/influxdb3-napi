@@ -150,7 +150,8 @@ jobs:
           path: |
             ${{ env.APP_NAME }}.*.node
             ${{ env.APP_NAME }}.*.wasm
-            ${{ env.APP_NAME }}.*.wasi.*
+            ${{ env.APP_NAME }}.*.wasi-browser.js
+            ${{ env.APP_NAME }}.*.wasi.cjs
             index.js
             index.d.ts
           if-no-files-found: error
