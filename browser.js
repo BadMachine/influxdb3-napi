@@ -1,1 +1,1 @@
-export * from 'influxdb3-napi-wasm32-wasi'
+export * from '@badmachine/influxdb3-napi-wasm32-wasi'

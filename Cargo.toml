@@ -28,27 +28,19 @@ version = "3.2"
 git = "https://github.com/BadMachine/napi-rs"
 branch = "fix/readable-stream-byte-mode-lock"
 package = "napi"
-features = ["full","experimental","tokio","web_stream","tokio-stream"]
+#features = ["full","experimental","tokio","web_stream","tokio-stream"]
+features = ["experimental", "web_stream", "serde-json", "napi10"]
 
 [dependencies.reqwest]
 version = "0.12"
 features = ["json","rustls-tls-native-roots-no-provider","gzip"]
 
-[dependencies.tonic]
-version = "0.13"
-features = ["gzip","tls-native-roots","tls-webpki-roots", "tls-ring"] # since rustls update it requires to manually initialize cryptoprovider
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tonic = { version = "0.13", features = ["gzip","tls-native-roots","tls-webpki-roots","tls-ring"] }
+arrow = { version = "56.0.0", features = ["arrow-json"] }
+arrow-flight = { version = "56.0.0", features = ["flight-sql"] }
+serde_arrow = { version = "0.13.5", features = ["arrow-56"] }
 
-[dependencies.arrow]
-version = "56.0.0"
-features = ["arrow-json"]
-
-[dependencies.arrow-flight]
-version = "56.0.0"
-features = ["flight-sql"]
-
-[dependencies.serde_arrow]
-version = "0.13.5"
-features = ["arrow-56"]
 
 [build-dependencies]
 napi-build = "2.2.3"
