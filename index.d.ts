@@ -2,13 +2,8 @@
 /* eslint-disable */
 export declare class InfluxDbClient {
   constructor(addr: string, token?: string | undefined | null, serializer?: Serializer | undefined | null, options?: FlightOptions | undefined | null)
-  query(queryPayload: QueryPayload): ReadableStream<LibraryReturnType> | ReadableStream<Record<string, any>> | ReadableStream<Buffer>
-  /**
-   * # Safety
-   *
-   * This function should not be called before the horsemen are ready.
-   */
-  write(lines: Array<string>, database: string, writeOptions?: WriteOptions | undefined | null, org?: string | undefined | null): Promise<void>
+  query(queryPayload: QueryPayload): ReadableStream<Record<string, any>> | ReadableStream<Buffer>
+  write(lines: Array<string>, database: string, writeOptions?: WriteOptions | undefined | null, org?: string | undefined | null): void
 }
 export type InfluxDBClient = InfluxDbClient
 
@@ -76,14 +71,13 @@ export interface FlightOptions {
   keepAliveTimeout?: number
 }
 
-export type LibraryReturnType =
-  Record<string, any | undefined | null>
-
-export type PointFieldType =  'float'|
-'integer'|
-'uinteger'|
-'string'|
-'boolean';
+export declare const enum PointFieldType {
+  Float = 'float',
+  Integer = 'integer',
+  UInteger = 'uinteger',
+  String = 'string',
+  Boolean = 'boolean'
+}
 
 export type PointFieldValue =
   | { type: 'Float', field0: number }
@@ -103,34 +97,40 @@ export interface QueryPayload {
   params?: Record<string, string>
 }
 
-export type QueryType =  'sql'|
-'influxql'|
-'flight_sql';
+export declare const enum QueryType {
+  Sql = 'sql',
+  InfluxQl = 'influxql',
+  FlightSql = 'flight_sql'
+}
 
 export type ReturnDataType =
   Record<string, any | undefined | null>
 
-export type Serializer =  'unsafe'|
-'library'|
-'raw';
+export declare const enum Serializer {
+  Unsafe = 0
+}
 
-export type TimeUnitV2 = /** Time in seconds. */
-'s'|
-/** Time in milliseconds. */
-'ms'|
-/** Time in microseconds. */
-'us'|
-/** Time in nanoseconds. */
-'ns';
+export declare const enum TimeUnitV2 {
+  /** Time in seconds. */
+  Second = 's',
+  /** Time in milliseconds. */
+  Millisecond = 'ms',
+  /** Time in microseconds. */
+  Microsecond = 'us',
+  /** Time in nanoseconds. */
+  Nanosecond = 'ns'
+}
 
-export type TimeUnitV3 = /** Time in seconds. */
-'second'|
-/** Time in milliseconds. */
-'millisecond'|
-/** Time in microseconds. */
-'microsecond'|
-/** Time in nanoseconds. */
-'nanosecond';
+export declare const enum TimeUnitV3 {
+  /** Time in seconds. */
+  Second = 'second',
+  /** Time in milliseconds. */
+  Millisecond = 'millisecond',
+  /** Time in microseconds. */
+  Microsecond = 'microsecond',
+  /** Time in nanoseconds. */
+  Nanosecond = 'nanosecond'
+}
 
 export interface WriteOptions {
   /** Precision to use in writes for timestamp. default ns */
