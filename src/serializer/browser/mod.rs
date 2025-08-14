@@ -3,10 +3,10 @@ pub(crate) mod unsafe_serializer;
 
 #[napi_derive::napi]
 pub enum Serializer {
-    Unsafe
+  Unsafe,
 }
 impl Default for Serializer {
-    fn default() -> Self {
-        Self::Unsafe
-    }
+  fn default() -> Self {
+    Self::Unsafe
+  }
 }

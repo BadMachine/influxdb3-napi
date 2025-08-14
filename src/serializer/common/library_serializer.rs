@@ -1,5 +1,4 @@
-
-use arrow_flight::error::Result as FlightResult;
+use crate::serializer::common::SerializerTrait;
 use crate::Value;
 use arrow::array::{
   Array, ArrayData, ArrayRef, BooleanArray, Date32Array, Date64Array, DurationMicrosecondArray,
@@ -11,10 +10,10 @@ use arrow::array::{
   UInt32Array, UInt64Array, UInt8Array,
 };
 use arrow::datatypes::{DataType, TimeUnit};
+use arrow_flight::error::Result as FlightResult;
 use napi_derive::napi;
 use std::collections::HashMap;
 use std::sync::Arc;
-use crate::serializer::common::SerializerTrait;
 
 #[cfg(not(target_arch = "wasm32"))]
 pub struct LibrarySerializer;

@@ -1,7 +1,7 @@
-use arrow_flight::error::Result as FlightResult;
 use crate::serializer::common::SerializerTrait;
 use arrow::array::RecordBatch;
 use arrow::ipc::writer::StreamWriter;
+use arrow_flight::error::Result as FlightResult;
 use napi::bindgen_prelude::Buffer;
 
 #[cfg(not(target_arch = "wasm32"))]
