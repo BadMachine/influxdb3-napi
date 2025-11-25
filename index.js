@@ -400,5 +400,6 @@ module.exports.PointValues = nativeBinding.PointValues
 module.exports.PointFieldType = nativeBinding.PointFieldType
 module.exports.QueryType = nativeBinding.QueryType
 module.exports.Serializer = nativeBinding.Serializer
+module.exports.test = nativeBinding.test
 module.exports.TimeUnitV2 = nativeBinding.TimeUnitV2
 module.exports.TimeUnitV3 = nativeBinding.TimeUnitV3
