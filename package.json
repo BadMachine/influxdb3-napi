@@ -57,7 +57,6 @@
     "build-rust-binary": "cargo build --bin my-binary -F native --release",
     "bench": "node --import @oxc-node/core/register benchmark/bench.ts",
     "build": "napi build --platform --release --no-const-enum",
-    "build-dev": "napi build --platform --no-const-enum",
     "build:wasm-unknown": "napi build --platform --release -t wasm32-unknown-unknown",
     "build:wasip1-threads": "napi build --platform --release -t wasm32-wasip1-threads",
     "build:debug": "napi build --platform",
