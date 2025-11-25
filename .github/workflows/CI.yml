@@ -54,7 +54,7 @@ jobs:
         settings:
           - host: macos-latest
             target: x86_64-apple-darwin
-            build: yarn build --target x86_64-apple-darwin
+            build: yarn build-dev --target x86_64-apple-darwin
           - host: windows-latest
             build: yarn build --target x86_64-pc-windows-msvc
             target: x86_64-pc-windows-msvc
@@ -344,7 +344,7 @@ jobs:
               curl -fsSL https://deb.nodesource.com/setup_${{ matrix.node }}.x | bash -
               apt-get install -y nodejs
               npm install -g yarn
-              
+            
               echo "=== Installed versions ==="
               node --version
               npm --version

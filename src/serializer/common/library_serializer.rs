@@ -15,7 +15,6 @@ use napi_derive::napi;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-#[cfg(not(target_arch = "wasm32"))]
 pub struct LibrarySerializer;
 
 #[napi]

@@ -2,8 +2,7 @@
 /* eslint-disable */
 export declare class InfluxDbClient {
   constructor(addr: string, token?: string | undefined | null, serializer?: Serializer | undefined | null, options?: FlightOptions | undefined | null)
-  query(queryPayload: QueryPayload): ReadableStream<Record<string, any>> | ReadableStream<Buffer>
-  write(lines: Array<string>, database: string, writeOptions?: WriteOptions | undefined | null, org?: string | undefined | null): void
+  query(queryPayload: QueryPayload): Promise<number>
 }
 export type InfluxDBClient = InfluxDbClient
 
@@ -109,6 +108,8 @@ export type ReturnDataType =
 export declare const enum Serializer {
   Unsafe = 0
 }
+
+export declare function test(): Promise<void>
 
 export declare const enum TimeUnitV2 {
   /** Time in seconds. */

@@ -21,7 +21,6 @@ pub enum Serializer {
   Raw,
 }
 
-#[cfg(not(target_arch = "wasm32"))]
 impl Default for Serializer {
   fn default() -> Self {
     Self::Library

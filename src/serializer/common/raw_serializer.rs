@@ -4,7 +4,6 @@ use arrow::ipc::writer::StreamWriter;
 use arrow_flight::error::Result as FlightResult;
 use napi::bindgen_prelude::Buffer;
 
-#[cfg(not(target_arch = "wasm32"))]
 pub struct RawSerializer;
 impl SerializerTrait for RawSerializer {
   type Output = Buffer;
